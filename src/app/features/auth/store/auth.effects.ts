@@ -47,9 +47,9 @@ export class AuthEffects {
             duration: 3000,
             panelClass: ['success-snackbar']
           });
+          const dashboardPath = `/dashboard/${user.role}`;
+          this.router.navigate([dashboardPath]);
         }
-        const dashboardPath = `/dashboard/${user.role}`;
-        this.router.navigate([dashboardPath]);
       })
     ),
     { dispatch: false }

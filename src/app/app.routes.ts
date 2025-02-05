@@ -30,6 +30,11 @@ export const routes: Routes = [
     loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule)
   },
   {
+    path: 'collection',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/collection/collection.module').then(m => m.CollectionModule)
+  },
+  {
     path: '**',
     redirectTo: ''
   }

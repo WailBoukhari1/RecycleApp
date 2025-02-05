@@ -1,6 +1,5 @@
 export type WasteType = 'plastic' | 'paper' | 'glass' | 'metal';
-
-export type CollectionStatus = 'pending' | 'occupied' | 'in_progress' | 'validated' | 'rejected';
+export type RequestStatus = 'pending' | 'occupied' | 'in_progress' | 'validated' | 'rejected';
 
 export interface TimeSlot {
   date: string;
@@ -10,33 +9,37 @@ export interface TimeSlot {
 
 export interface WasteItem {
   type: WasteType;
-  weight: number;  // in kg, minimum 1kg
+  weight: number;  // in grams
   photos?: string[];
 }
 
 export interface CollectionRequest {
-  id: string;
-  userId: string;
-  userCity: string;
+  id?: string;
+  userId?: string;
+  userCity?: string;
   wastes: WasteItem[];
-  totalWeight: number;  // Max 10kg
+  totalWeight: number;  // in grams
   address: string;
-  timeSlot: TimeSlot;
-  status: CollectionStatus;
+  city: string;
+  date: string;
+  timeSlot: string;
   notes?: string;
+  photos?: File[];
+  status: RequestStatus;
+  createdAt: string;
+  updatedAt: string;
   collectorId?: string;
   collectorPhotos?: string[];
   verifiedWeight?: number;
   pointsAwarded?: number;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface PointsConfig {
-  plastic: 2,
-  glass: 1,
-  paper: 1,
-  metal: 5
+  [key: string]: number;
+  plastic: 2;
+  glass: 1;
+  paper: 1;
+  metal: 5;
 }
 
 export interface RewardTier {
@@ -55,4 +58,18 @@ export const REWARD_TIERS: RewardTier[] = [
   { points: 100, value: 50 },
   { points: 200, value: 120 },
   { points: 500, value: 350 }
-]; 
+];
+
+export interface WasteTypePoints {
+  plastic: number;
+  paper: number;
+  glass: number;
+  metal: number;
+}
+
+export const POINTS_PER_KG: WasteTypePoints = {
+  plastic: 2,
+  paper: 1,
+  glass: 1,
+  metal: 5
+}; 

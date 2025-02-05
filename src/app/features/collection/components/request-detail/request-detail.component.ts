@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CollectionService } from '../../../../core/services/collection.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { CollectionRequest, CollectionStatus } from '../../../../core/models/collection.model';
+import { CollectionRequest, RequestStatus } from '../../../../core/models/collection.model';
 
 @Component({
   selector: 'app-request-detail',
@@ -34,7 +34,7 @@ import { CollectionRequest, CollectionStatus } from '../../../../core/models/col
 })
 export class RequestDetailComponent implements OnInit {
   request: CollectionRequest | null = null;
-  verificationForm: FormGroup;
+  verificationForm!: FormGroup;
   userRole: 'collector' | 'individual' | null = null;
   selectedPhotos: File[] = [];
 
@@ -45,6 +45,10 @@ export class RequestDetailComponent implements OnInit {
     private collectionService: CollectionService,
     private authService: AuthService
   ) {
+    this.createForm();
+  }
+
+  private createForm(): void {
     this.verificationForm = this.fb.group({
       verifiedWeight: ['', [Validators.required, Validators.min(0.1)]],
       notes: ['']
@@ -57,19 +61,38 @@ export class RequestDetailComponent implements OnInit {
 
     const requestId = this.route.snapshot.paramMap.get('id');
     if (requestId) {
-      // TODO: Get request details from service
+      this.loadRequestDetails(requestId);
+    } else {
+      this.router.navigate(['/collection/my-requests']);
     }
+  }
+
+  private loadRequestDetails(id: string): void {
+    this.collectionService.getRequestById(id).subscribe(
+      request => {
+        this.request = request;
+      },
+      error => {
+        console.error('Error loading request:', error);
+        this.router.navigate(['/collection/my-requests']);
+      }
+    );
   }
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
-      this.selectedPhotos = Array.from(input.files);
+      // Limit to 5 photos maximum
+      const newPhotos = Array.from(input.files);
+      if (this.selectedPhotos.length + newPhotos.length > 5) {
+        return;
+      }
+      this.selectedPhotos = [...this.selectedPhotos, ...newPhotos];
     }
   }
 
-  updateStatus(status: CollectionStatus): void {
-    if (!this.request) return;
+  updateStatus(status: RequestStatus): void {
+    if (!this.request?.id) return;
 
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser) return;
@@ -83,7 +106,7 @@ export class RequestDetailComponent implements OnInit {
         status,
         currentUser.id,
         verifiedWeight,
-        this.selectedPhotos.map(file => URL.createObjectURL(file))
+        this.selectedPhotos
       ).subscribe(() => {
         this.router.navigate(['/collection/available']);
       });
@@ -93,7 +116,7 @@ export class RequestDetailComponent implements OnInit {
         status,
         currentUser.id
       ).subscribe(() => {
-        // Refresh the request details
+        this.loadRequestDetails(this.request!.id!);
       });
     }
   }

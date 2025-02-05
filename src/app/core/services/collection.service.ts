@@ -1,17 +1,22 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { CollectionRequest, CollectionStatus, POINTS_CONFIG } from '../models/collection.model';
-import { AuthService } from './auth.service';
+import { CollectionRequest, RequestStatus, POINTS_CONFIG } from '../models/collection.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CollectionService {
   private readonly COLLECTIONS_KEY = 'collections';
-  private readonly MAX_PENDING_REQUESTS = 3;
-  private readonly MAX_TOTAL_WEIGHT = 10;
 
-  constructor(private authService: AuthService) {}
+  constructor() {
+    this.initializeCollections();
+  }
+
+  private initializeCollections(): void {
+    if (!localStorage.getItem(this.COLLECTIONS_KEY)) {
+      localStorage.setItem(this.COLLECTIONS_KEY, JSON.stringify([]));
+    }
+  }
 
   private getCollections(): CollectionRequest[] {
     const collectionsStr = localStorage.getItem(this.COLLECTIONS_KEY);
@@ -22,100 +27,75 @@ export class CollectionService {
     localStorage.setItem(this.COLLECTIONS_KEY, JSON.stringify(collections));
   }
 
-  createRequest(requestData: Omit<CollectionRequest, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Observable<CollectionRequest> {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      return throwError(() => new Error('User not authenticated'));
-    }
-
-    // Check total weight
-    if (requestData.totalWeight > this.MAX_TOTAL_WEIGHT) {
-      return throwError(() => new Error(`Total weight cannot exceed ${this.MAX_TOTAL_WEIGHT}kg`));
-    }
-
-    // Check pending requests limit
-    const userCollections = this.getCollections().filter(c => 
-      c.userId === currentUser.id && 
-      c.status === 'pending'
-    );
-
-    if (userCollections.length >= this.MAX_PENDING_REQUESTS) {
-      return throwError(() => new Error('Maximum pending requests limit reached'));
-    }
-
+  createRequest(request: Omit<CollectionRequest, 'id' | 'createdAt' | 'status' | 'updatedAt'>): Observable<CollectionRequest> {
     const newRequest: CollectionRequest = {
-      ...requestData,
+      ...request,
       id: Date.now().toString(),
-      status: 'pending',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      status: 'pending'
     };
-
     const collections = this.getCollections();
     collections.push(newRequest);
     this.saveCollections(collections);
-
     return of(newRequest);
   }
 
-  getUserRequests(userId: string): Observable<CollectionRequest[]> {
-    const collections = this.getCollections().filter(c => c.userId === userId);
-    return of(collections);
+  getRequestById(id: string): Observable<CollectionRequest> {
+    const collections = this.getCollections();
+    const request = collections.find(r => r.id === id);
+    if (!request) {
+      return throwError(() => new Error('Request not found'));
+    }
+    return of(request);
   }
 
-  getAvailableRequests(collectorCity: string): Observable<CollectionRequest[]> {
-    const collections = this.getCollections().filter(c => 
-      c.userCity === collectorCity && 
-      c.status === 'pending'
-    );
-    return of(collections);
+  getPendingRequests(): Observable<CollectionRequest[]> {
+    const collections = this.getCollections();
+    return of(collections.filter(request => request.status === 'pending'));
+  }
+
+  getAvailableRequests(city: string): Observable<CollectionRequest[]> {
+    const collections = this.getCollections();
+    return of(collections.filter(request => 
+      request.city === city && request.status === 'pending'
+    ));
   }
 
   updateRequestStatus(
-    requestId: string, 
-    status: CollectionStatus, 
-    collectorId?: string,
+    requestId: string,
+    status: RequestStatus,
+    collectorId: string,
     verifiedWeight?: number,
-    collectorPhotos?: string[]
+    photos?: File[]
   ): Observable<CollectionRequest> {
     const collections = this.getCollections();
-    const index = collections.findIndex(c => c.id === requestId);
-
+    const index = collections.findIndex(r => r.id === requestId);
+    
     if (index === -1) {
-      return throwError(() => new Error('Collection request not found'));
+      return throwError(() => new Error('Request not found'));
     }
 
-    const updatedRequest = {
+    const updatedRequest: CollectionRequest = {
       ...collections[index],
       status,
+      collectorId,
+      verifiedWeight,
+      collectorPhotos: photos?.map(photo => URL.createObjectURL(photo)),
       updatedAt: new Date().toISOString()
     };
 
-    if (collectorId) {
-      updatedRequest.collectorId = collectorId;
-    }
-
-    if (verifiedWeight !== undefined) {
-      updatedRequest.verifiedWeight = verifiedWeight;
-    }
-
-    if (collectorPhotos) {
-      updatedRequest.collectorPhotos = collectorPhotos;
-    }
-
-    // Calculate points if request is validated
     if (status === 'validated' && verifiedWeight) {
       let totalPoints = 0;
       updatedRequest.wastes.forEach(waste => {
         const pointsPerKg = POINTS_CONFIG[waste.type];
-        totalPoints += pointsPerKg * waste.weight;
+        totalPoints += pointsPerKg * (waste.weight / 1000); // Convert grams to kg for points calculation
       });
       updatedRequest.pointsAwarded = totalPoints;
     }
 
     collections[index] = updatedRequest;
     this.saveCollections(collections);
-
     return of(updatedRequest);
   }
 

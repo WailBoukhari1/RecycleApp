@@ -17,6 +17,7 @@ import { authReducer } from './features/auth/store/auth.reducer';
 import { AuthEffects } from './features/auth/store/auth.effects';
 import { routes } from './app.routes';
 import { ProfileModule } from './features/profile/profile.module';
+import { CollectionModule } from './features/collection/collection.module';
 
 @NgModule({
   declarations: [
@@ -32,10 +33,11 @@ import { ProfileModule } from './features/profile/profile.module';
     StoreModule.forRoot({ auth: authReducer }),
     EffectsModule.forRoot([AuthEffects]),
     StoreDevtoolsModule.instrument(),
-    DashboardModule,
     CoreModule,
     AuthModule,
+    DashboardModule,
     ProfileModule,
+    CollectionModule
   ],
   providers: [],
   bootstrap: [AppComponent]

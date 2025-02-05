@@ -1,0 +1,149 @@
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="container mx-auto px-4">
+    <!-- Welcome Section -->
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome back, {{(user$ | async)?.firstName}}!</h1>
+      <p class="text-gray-600">Manage your collection activities and track your performance.</p>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Stats Card -->
+      <mat-card class="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <mat-card-content>
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-lg font-medium">Collections Today</div>
+            <mat-icon class="text-blue-200">recycling</mat-icon>
+          </div>
+          <div class="text-3xl font-bold mb-2">5</div>
+          <div class="text-sm text-blue-100">Total weight: 25kg</div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Performance Card -->
+      <mat-card class="bg-gradient-to-br from-green-500 to-green-600 text-white">
+        <mat-card-content>
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-lg font-medium">Success Rate</div>
+            <mat-icon class="text-green-200">trending_up</mat-icon>
+          </div>
+          <div class="text-3xl font-bold mb-2">95%</div>
+          <div class="text-sm text-green-100">Last 30 days</div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Quick Actions Card -->
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Quick Actions</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="!mt-4">
+          <div class="grid grid-cols-2 gap-4">
+            <button mat-stroked-button color="primary" (click)="navigateToAvailableCollections()">
+              <mat-icon>search</mat-icon>
+              <span class="ml-2">Find Requests</span>
+            </button>
+            <button mat-stroked-button color="primary" (click)="navigateToActiveCollections()">
+              <mat-icon>local_shipping</mat-icon>
+              <span class="ml-2">Active Jobs</span>
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Recent Collections Card -->
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Recent Collections</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="!mt-4">
+          <div class="space-y-4">
+            <div class="flex items-center gap-3 text-sm">
+              <div class="h-2 w-2 rounded-full bg-green-500"></div>
+              <span class="text-gray-600">Plastic collection - 5kg</span>
+              <span class="ml-auto text-gray-500">2h ago</span>
+            </div>
+            <div class="flex items-center gap-3 text-sm">
+              <div class="h-2 w-2 rounded-full bg-green-500"></div>
+              <span class="text-gray-600">Glass collection - 3kg</span>
+              <span class="ml-auto text-gray-500">4h ago</span>
+            </div>
+            <div class="flex items-center gap-3 text-sm">
+              <div class="h-2 w-2 rounded-full bg-green-500"></div>
+              <span class="text-gray-600">Paper collection - 4kg</span>
+              <span class="ml-auto text-gray-500">6h ago</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Collection Stats Card -->
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Collection Stats</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="!mt-4">
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between mb-1 text-sm">
+                <span class="text-gray-600">Plastic</span>
+                <span class="text-gray-900 font-medium">250kg</span>
+              </div>
+              <div class="h-2 bg-gray-200 rounded-full">
+                <div class="h-2 bg-blue-500 rounded-full" style="width: 80%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1 text-sm">
+                <span class="text-gray-600">Paper</span>
+                <span class="text-gray-900 font-medium">180kg</span>
+              </div>
+              <div class="h-2 bg-gray-200 rounded-full">
+                <div class="h-2 bg-green-500 rounded-full" style="width: 60%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1 text-sm">
+                <span class="text-gray-600">Glass</span>
+                <span class="text-gray-900 font-medium">120kg</span>
+              </div>
+              <div class="h-2 bg-gray-200 rounded-full">
+                <div class="h-2 bg-yellow-500 rounded-full" style="width: 40%"></div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Schedule Card -->
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Today's Schedule</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="!mt-4">
+          <div class="space-y-4">
+            <div class="p-4 border border-gray-200 rounded-lg">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-medium">Plastic Collection</span>
+                <span class="text-sm text-gray-500">14:00</span>
+              </div>
+              <p class="text-sm text-gray-600 mb-2">Address: Hay Riad, Rabat</p>
+              <button mat-stroked-button color="primary" class="w-full">
+                View Details
+              </button>
+            </div>
+            <div class="p-4 border border-gray-200 rounded-lg">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-medium">Mixed Materials</span>
+                <span class="text-sm text-gray-500">16:30</span>
+              </div>
+              <p class="text-sm text-gray-600 mb-2">Address: Agdal, Rabat</p>
+              <button mat-stroked-button color="primary" class="w-full">
+                View Details
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div> 

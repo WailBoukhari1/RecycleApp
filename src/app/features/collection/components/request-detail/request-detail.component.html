@@ -40,8 +40,8 @@
           </div>
           <div>
             <p class="text-gray-600">Time Slot</p>
-            <p>{{request.timeSlot.date | date}}</p>
-            <p>{{request.timeSlot.startTime}} - {{request.timeSlot.endTime}}</p>
+            <p>{{request.date | date}}</p>
+            <p>{{request.timeSlot}}</p>
           </div>
           <div *ngIf="request.notes">
             <p class="text-gray-600">Notes</p>

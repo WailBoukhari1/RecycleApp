@@ -44,15 +44,15 @@ export class NavbarComponent {
   }
 
   navigateToAvailableCollections(): void {
-    this.router.navigate(['/available']);
+    this.router.navigate(['/collection/available']);
   }
 
   navigateToCreateRequest(): void {
-    this.router.navigate(['/create']);
+    this.router.navigate(['/collection/create']);
   }
 
   navigateToRequests(): void {
-    this.router.navigate(['/my-requests']);
+    this.router.navigate(['/collection/my-requests']);
   }
 
   navigateToLogin(): void {
