@@ -1,0 +1,93 @@
+
+1
+ 
+Brief de la soutenance croisée 3 2024/2025 
+Projet : RecycleHub 
+Contexte du Projet 
+RecycleHub est une application de gestion de recyclage qui met en relation des particuliers et des 
+collecteurs agréés appartenant à l’entreprise qui souhaite automatiser ses tâches. Le projet doit 
+être développé comme une Single Page Application (SPA) en utilisant Angular en front-end 
+uniquement. Voici le fonctionnement de cette application étape par étape : 
+ 
+1. Inscription/Connexion : 
+Le particulier crée un compte avec les informations suivantes : 
+●  Email et mot de passe 
+●  Nom et prénom 
+●  Adresse complète 
+●  Numéro de téléphone 
+●  Date de naissance 
+●  Photo de profil (optionnel) 
+ 
+L'interface de connexion est unique (pas de choix de type d'utilisateur avec une authentification 
+basique) 
+ 
+L'interface d'inscription n'est bénéfique que pour les particuliers car les collecteurs doivent être 
+pré-enregistrés manuellement en local storage et ils ont les mêmes informations qu'un simple 
+particulier 
+ 
+Un utilisateur (collecteur ou particulier) est capable de modifier ses coordonnées et de supprimer 
+son compte aussi 
+ 
+La présence de l'admin n'est pas demandée 
+ 
+2. Demande de Collecte : 
+Le particulier soumet une demande avec : 
+●   Type de déchet à recycler (plastique, verre, papier, métal) 
+●   Photos des déchets à recycler (optionnel) 
+●   Poids estimé (minimum 1000g obligatoire) 
+●   Adresse de collecte 
+●   Date et créneau horaire souhaités entre 09h00 et 18h00 
+●   Notes supplémentaires (optionnel) 
+   
+Le statut de la demande est par défaut en attente et seul le collecteur est capable de le changer 
+   
+Le particulier peut consulter la liste de ses demandes de collecte, avec la possibilité de modifier 
+ou supprimer celles qui sont encore en statut "en attente" 
+   
+ 
+ 
+Un particulier peut : 
+●   Regrouper plusieurs types de déchets dans une même demande de collecte 
+●   Effectuer au maximum 3 demandes différentes simultanées non encore validées ou 
+rejetées 
+   
+Le total des collectes est au max 10kg 
+   
+3. Processus de Collecte : 
+Le collecteur accède à une liste des demandes de collecte disponibles auxquelles il a le droit 
+d'accéder et peut sélectionner celle de son choix 
+ 
+Il choisit la demande "En attente" à collecter 
+ 
+Une demande (coté particulier ou collecteur) peut avoir l'un des statuts suivants : 
+●   En attente 
+●   Occupée (lorsque le collecteur accepte la collecte et décide d'aller sur place) 
+●   En cours (lorsque le collecteur commence la collecte sur place) 
+●   Validée 
+●   Rejetée 
+ 
+Quand le collecteur arrive à sa destination, il : 
+●   Vérifie le type de matériaux 
+●   Pèse et valide le poids réel 
+●   Prend une ou plusieurs photos (optionnel) 
+●   Valide la transaction dans la plateforme si c'est correct sinon ça sera rejetée 
+  
+Le collecteur ne peut visionner que la liste des demandes provenant de sa même ville 
+mentionnée dans son adresse 
+ 
+4. Système de Points : 
+Attribution automatique après validation de la collecte selon le barème suivant : 
+●  Plastique    : 2 points/kg 
+●  Verre     : 1 point/kg 
+●  Papier    : 1 point/kg 
+●  Métal     : 5 points/kg 
+ 
+Conversion (à la demande du particulier) des points possible en : 
+●  100 points = bon d'achat de 50 Dh 
+●  200 points = bon d'achat de 120 Dh 
+●  500 points = bon d'achat de 350 Dh 
+ 
+ 
+ 
+ 
+ 

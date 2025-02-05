@@ -1,0 +1,76 @@
+<div
+  class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"
+>
+  <mat-card class="max-w-md w-full space-y-8 p-8">
+    <div class="text-center">
+      <h2 class="text-3xl font-extrabold text-gray-900">Login to RecycleHub</h2>
+    </div>
+
+    <form
+      [formGroup]="loginForm"
+      (ngSubmit)="onSubmit()"
+      class="mt-8 space-y-6"
+    >
+      <mat-form-field class="w-full">
+        <mat-label>Email</mat-label>
+        <input
+          matInput
+          type="email"
+          formControlName="email"
+          placeholder="Enter your email"
+        />
+        <mat-error *ngIf="loginForm.get('email')?.hasError('required')">
+          Email is required
+        </mat-error>
+        <mat-error *ngIf="loginForm.get('email')?.hasError('email')">
+          Please enter a valid email
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="w-full">
+        <mat-label>Password</mat-label>
+        <input
+          matInput
+          type="password"
+          formControlName="password"
+          placeholder="Enter your password"
+        />
+        <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
+          Password is required
+        </mat-error>
+      </mat-form-field>
+
+      <div *ngIf="error$ | async as error" class="text-red-600 text-sm">
+        {{ error }}
+      </div>
+
+      <div class="flex justify-center">
+        <button
+          mat-raised-button
+          color="primary"
+          [disabled]="loginForm.invalid || (loading$ | async)"
+          class="w-full"
+        >
+          <mat-spinner
+            diameter="20"
+            *ngIf="loading$ | async"
+            class="mr-2"
+          ></mat-spinner>
+          {{ (loading$ | async) ? "Logging in..." : "Login" }}
+        </button>
+      </div>
+    </form>
+
+    <div class="text-center mt-4">
+      <p class="text-sm text-gray-600">
+        Don't have an account?
+        <a
+          routerLink="/auth/register"
+          class="text-primary hover:text-primary-dark"
+        >
+          Register here
+        </a>
+      </p>
+    </div>
+  </mat-card>
+</div>

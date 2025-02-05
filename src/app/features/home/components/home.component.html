@@ -1,0 +1,36 @@
+
+    <div class="container mx-auto px-4 py-8">
+      <ng-container *ngIf="currentUser$ | async as user">
+        <div class="text-center mb-8">
+          <h1 class="text-3xl font-bold text-gray-900">
+            Welcome back, {{ user.firstName }}!
+          </h1>
+          <p class="mt-2 text-gray-600">
+            What would you like to do today?
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Quick Actions -->
+          <mat-card class="p-6">
+            <mat-card-header>
+              <mat-card-title>Quick Actions</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="mt-4">
+              <div class="space-y-4">
+                <button mat-flat-button color="primary" class="w-full" 
+                  [routerLink]="['/dashboard', user.userType]">
+                  <mat-icon class="mr-2">dashboard</mat-icon>
+                  Go to Dashboard
+                </button>
+                <button mat-stroked-button color="primary" class="w-full" 
+                  routerLink="/profile">
+                  <mat-icon class="mr-2">person</mat-icon>
+                  View Profile
+                </button>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </ng-container>
+    </div>
