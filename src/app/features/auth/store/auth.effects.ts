@@ -21,7 +21,7 @@ export class AuthEffects {
       ofType(AuthActions.initAuth),
       map(() => {
         const user = this.authService.getCurrentUser();
-        return user ? AuthActions.loginSuccess({ user }) : AuthActions.logoutSuccess();
+        return user ? AuthActions.loginSuccess({ user, showNotification: false }) : AuthActions.logoutSuccess();
       })
     )
   );
@@ -31,7 +31,7 @@ export class AuthEffects {
       ofType(AuthActions.login),
       switchMap(({ email, password }) =>
         this.authService.login(email, password).pipe(
-          map(user => AuthActions.loginSuccess({ user })),
+          map(user => AuthActions.loginSuccess({ user, showNotification: true })),
           catchError(error => of(AuthActions.loginFailure({ error: error.message })))
         )
       )
@@ -41,11 +41,13 @@ export class AuthEffects {
   loginSuccess$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.loginSuccess),
-      tap(({ user }) => {
-        this.notificationService.open('Login successful! Welcome back', 'Close', {
-          duration: 3000,
-          panelClass: ['success-snackbar']
-        });
+      tap(({ user, showNotification }) => {
+        if (showNotification) {
+          this.notificationService.open('Login successful! Welcome back', 'Close', {
+            duration: 3000,
+            panelClass: ['success-snackbar']
+          });
+        }
         const dashboardPath = `/dashboard/${user.role}`;
         this.router.navigate([dashboardPath]);
       })

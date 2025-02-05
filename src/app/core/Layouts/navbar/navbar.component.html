@@ -18,11 +18,11 @@
         <div class="flex items-center gap-4" *ngIf="user$ | async as user">
           <!-- Individual User Links -->
           <ng-container *ngIf="user.role === 'individual'">
-            <button mat-button class="text-gray-700 hover:text-blue-600" routerLink="/collection/my-requests">
+            <button mat-button class="text-gray-700 hover:text-blue-600" (click)="navigateToRequests()">
               <mat-icon>recycling</mat-icon>
               <span>My Collections</span>
             </button>
-            <button mat-button class="text-gray-700 hover:text-blue-600" routerLink="/collection/create">
+            <button mat-button class="text-gray-700 hover:text-blue-600" (click)="navigateToCreateRequest()">
               <mat-icon>add_circle</mat-icon>
               <span>New Request</span>
             </button>
@@ -30,7 +30,7 @@
 
           <!-- Collector User Links -->
           <ng-container *ngIf="user.role === 'collector'">
-            <button mat-button class="text-gray-700 hover:text-blue-600" routerLink="/collection/available">
+            <button mat-button class="text-gray-700 hover:text-blue-600" (click)="navigateToAvailableCollections()">
               <mat-icon>list_alt</mat-icon>
               <span>Available Collections</span>
             </button>
@@ -67,10 +67,10 @@
 
         <!-- Auth Links -->
         <div class="flex items-center gap-4" *ngIf="!(user$ | async)">
-          <button mat-button class="text-gray-700 hover:text-blue-600" routerLink="/auth/login">
+          <button mat-button class="text-gray-700 hover:text-blue-600" (click)="navigateToLogin()">
             Login
           </button>
-          <button mat-raised-button color="primary" routerLink="/auth/register">
+          <button mat-raised-button color="primary" (click)="navigateToRegister()">
             Register
           </button>
         </div>

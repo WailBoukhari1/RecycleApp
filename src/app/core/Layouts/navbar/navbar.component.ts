@@ -43,6 +43,26 @@ export class NavbarComponent {
     this.router.navigate(['/profile']);
   }
 
+  navigateToAvailableCollections(): void {
+    this.router.navigate(['/available']);
+  }
+
+  navigateToCreateRequest(): void {
+    this.router.navigate(['/create']);
+  }
+
+  navigateToRequests(): void {
+    this.router.navigate(['/my-requests']);
+  }
+
+  navigateToLogin(): void {
+    this.router.navigate(['/auth/login']);
+  }
+
+  navigateToRegister(): void {
+    this.router.navigate(['/auth/register']);
+  }
+
   logout(): void {
     this.store.dispatch(AuthActions.logout());
   }
