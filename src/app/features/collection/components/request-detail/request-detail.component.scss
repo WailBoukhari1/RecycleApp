@@ -1,0 +1,51 @@
+.photo-upload {
+  @apply border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors;
+  
+  mat-icon {
+    @apply text-4xl text-gray-400 mb-2;
+  }
+}
+
+.status-chip {
+  @apply px-3 py-1 rounded-full text-sm font-medium;
+  
+  &.pending {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+  
+  &.occupied {
+    @apply bg-blue-100 text-blue-800;
+  }
+  
+  &.in_progress {
+    @apply bg-purple-100 text-purple-800;
+  }
+  
+  &.validated {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  &.rejected {
+    @apply bg-red-100 text-red-800;
+  }
+}
+
+mat-card {
+  @apply p-6;
+}
+
+mat-card-header {
+  @apply flex items-center mb-6;
+}
+
+mat-card-title {
+  @apply text-2xl font-bold;
+}
+
+section {
+  @apply border-b border-gray-200 pb-6;
+  
+  &:last-child {
+    @apply border-b-0 pb-0;
+  }
+} 

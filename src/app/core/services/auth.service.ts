@@ -23,9 +23,9 @@ export class AuthService {
           firstName: 'John',
           lastName: 'Collector',
           address: 'Casablanca, Morocco',
-          phone: '+212600000001',
+          phoneNumber: '+212600000001',
           birthDate: '1990-01-01',
-          userType: 'collector'
+          role: 'collector'
         }
       ];
       localStorage.setItem(this.USERS_KEY, JSON.stringify(defaultCollectors));
@@ -48,12 +48,12 @@ export class AuthService {
     return throwError(() => new Error('Invalid credentials'));
   }
 
-  register(userData: Omit<User, 'id' | 'userType'>): Observable<User> {
+  register(userData: Omit<User, 'id'>): Observable<User> {
     const users = this.getUsers();
     const newUser: User = {
       ...userData,
       id: Date.now().toString(),
-      userType: 'individual'
+      role: 'individual'
     };
 
     users.push(newUser);

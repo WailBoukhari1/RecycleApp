@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import { map, take } from 'rxjs/operators';
 import { selectAuthUser } from '../../features/auth/store/auth.selectors';
 
-export const authGuard = () => {
+export const roleGuard = () => {
   const router = inject(Router);
   const store = inject(Store);
 
@@ -12,12 +12,13 @@ export const authGuard = () => {
     take(1),
     map(user => {
       if (!user) {
-        router.navigate(['/auth/login'], {
-          queryParams: { returnUrl: router.routerState.snapshot.url }
-        });
+        router.navigate(['/auth/login']);
         return false;
       }
-      return true;
+      
+      const dashboardPath = `/dashboard/${user.role}`;
+      router.navigate([dashboardPath]);
+      return false;
     })
   );
 }; 

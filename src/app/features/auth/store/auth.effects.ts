@@ -1,17 +1,21 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
-import { map, mergeMap, catchError, tap, withLatestFrom } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { Location } from '@angular/common';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
-import { NotificationService } from '../../../core/services/notification.service';
 import * as AuthActions from './auth.actions';
-import { Store } from '@ngrx/store';
-import { selectAuthUser } from './auth.selectors';
 
 @Injectable()
 export class AuthEffects {
+  constructor(
+    private actions$: Actions,
+    private authService: AuthService,
+    private router: Router,
+    private notificationService: MatSnackBar
+  ) {}
+
   init$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.initAuth),
@@ -25,25 +29,10 @@ export class AuthEffects {
   login$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.login),
-      mergeMap(({ email, password }) =>
+      switchMap(({ email, password }) =>
         this.authService.login(email, password).pipe(
-          map(user => {
-            this.router.navigate(['/home']);
-            return AuthActions.loginSuccess({ user });
-          }),
+          map(user => AuthActions.loginSuccess({ user })),
           catchError(error => of(AuthActions.loginFailure({ error: error.message })))
-        )
-      )
-    )
-  );
-
-  register$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(AuthActions.register),
-      mergeMap(({ userData }) =>
-        this.authService.register(userData).pipe(
-          map(user => AuthActions.registerSuccess({ user })),
-          catchError(error => of(AuthActions.registerFailure({ error: error.message })))
         )
       )
     )
@@ -52,34 +41,66 @@ export class AuthEffects {
   loginSuccess$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.loginSuccess),
-      withLatestFrom(this.actions$.pipe(ofType(AuthActions.login))),
-      tap(([{ user }, loginAction]) => {
-        if (loginAction) {
-          this.notificationService.success('Welcome back!');
-          this.router.navigate(['/home']);
-        }
+      tap(({ user }) => {
+        this.notificationService.open('Login successful! Welcome back', 'Close', {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+        const dashboardPath = `/dashboard/${user.role}`;
+        this.router.navigate([dashboardPath]);
       })
     ),
     { dispatch: false }
   );
 
-  authFailure$ = createEffect(() =>
+  loginFailure$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AuthActions.loginFailure, AuthActions.registerFailure),
+      ofType(AuthActions.loginFailure),
       tap(({ error }) => {
-        this.notificationService.error(error);
+        this.notificationService.open(error || 'Login failed', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
       })
     ),
     { dispatch: false }
+  );
+
+  register$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.register),
+      switchMap(({ userData }) =>
+        this.authService.register(userData).pipe(
+          map(user => AuthActions.registerSuccess({ user })),
+          catchError(error => of(AuthActions.registerFailure({ error: error.message })))
+        )
+      )
+    )
   );
 
   registerSuccess$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.registerSuccess),
       tap(({ user }) => {
-        this.notificationService.success('Registration successful! Welcome to RecycleHub');
-        const route = user.userType === 'collector' ? '/collector-dashboard' : '/user-dashboard';
-        this.router.navigate([route]);
+        this.notificationService.open('Registration successful! Welcome to RecycleHub', 'Close', {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+        const dashboardPath = `/dashboard/${user.role}`;
+        this.router.navigate([dashboardPath]);
+      })
+    ),
+    { dispatch: false }
+  );
+
+  registerFailure$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.registerFailure),
+      tap(({ error }) => {
+        this.notificationService.open(error || 'Registration failed', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
       })
     ),
     { dispatch: false }
@@ -88,7 +109,9 @@ export class AuthEffects {
   logout$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.logout),
-      tap(() => this.authService.clearSession()),
+      tap(() => {
+        this.authService.clearSession();
+      }),
       map(() => AuthActions.logoutSuccess())
     )
   );
@@ -96,7 +119,9 @@ export class AuthEffects {
   logoutSuccess$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.logoutSuccess),
-      tap(() => this.router.navigate(['/login']))
+      tap(() => {
+        this.router.navigate(['/auth/login']);
+      })
     ),
     { dispatch: false }
   );
@@ -104,13 +129,16 @@ export class AuthEffects {
   updateProfile$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.updateProfile),
-      withLatestFrom(this.store.select(selectAuthUser)),
-      mergeMap(([{ userData }, currentUser]) =>
-        this.authService.updateProfile(currentUser!.id!, userData).pipe(
+      switchMap(({ userData }) => {
+        const currentUser = this.authService.getCurrentUser();
+        if (!currentUser) {
+          return of(AuthActions.updateProfileFailure({ error: 'No user logged in' }));
+        }
+        return this.authService.updateProfile(currentUser.id, userData).pipe(
           map(user => AuthActions.updateProfileSuccess({ user })),
           catchError(error => of(AuthActions.updateProfileFailure({ error: error.message })))
-        )
-      )
+        );
+      })
     )
   );
 
@@ -118,7 +146,10 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(AuthActions.updateProfileSuccess),
       tap(() => {
-        this.notificationService.success('Profile updated successfully');
+        this.notificationService.open('Profile updated successfully', 'Close', {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
       })
     ),
     { dispatch: false }
@@ -128,7 +159,10 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(AuthActions.updateProfileFailure),
       tap(({ error }) => {
-        this.notificationService.error(`Failed to update profile: ${error}`);
+        this.notificationService.open(error || 'Failed to update profile', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
       })
     ),
     { dispatch: false }
@@ -137,13 +171,16 @@ export class AuthEffects {
   deleteAccount$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.deleteAccount),
-      withLatestFrom(this.store.select(selectAuthUser)),
-      mergeMap(([_, user]) =>
-        this.authService.deleteAccount(user!.id!).pipe(
+      switchMap(() => {
+        const currentUser = this.authService.getCurrentUser();
+        if (!currentUser) {
+          return of(AuthActions.deleteAccountFailure({ error: 'No user logged in' }));
+        }
+        return this.authService.deleteAccount(currentUser.id).pipe(
           map(() => AuthActions.deleteAccountSuccess()),
           catchError(error => of(AuthActions.deleteAccountFailure({ error: error.message })))
-        )
-      )
+        );
+      })
     )
   );
 
@@ -151,28 +188,26 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(AuthActions.deleteAccountSuccess),
       tap(() => {
-        this.notificationService.success('Account deleted successfully');
-      }),
-      map(() => AuthActions.logoutSuccess())
-    )
+        this.notificationService.open('Account deleted successfully', 'Close', {
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
+        this.router.navigate(['/auth/login']);
+      })
+    ),
+    { dispatch: false }
   );
 
   deleteAccountFailure$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.deleteAccountFailure),
       tap(({ error }) => {
-        this.notificationService.error(`Failed to delete account: ${error}`);
+        this.notificationService.open(error || 'Failed to delete account', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
       })
     ),
     { dispatch: false }
   );
-
-  constructor(
-    private actions$: Actions,
-    private authService: AuthService,
-    private router: Router,
-    private store: Store,
-    private location: Location,
-    private notificationService: NotificationService
-  ) {}
 } 

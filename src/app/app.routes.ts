@@ -5,8 +5,14 @@ import { noAuthGuard } from './core/guards/no-auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'auth/login',
-    pathMatch: 'full'
+    canActivate: [noAuthGuard],
+    children: [
+      {
+        path: '',
+        redirectTo: 'auth/login',
+        pathMatch: 'full'
+      }
+    ]
   },
   {
     path: 'auth',
@@ -22,11 +28,6 @@ export const routes: Routes = [
     path: 'profile',
     canActivate: [authGuard],
     loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule)
-  },
-  {
-    path: 'home',
-    canActivate: [authGuard],
-    loadChildren: () => import('./features/home/home.module').then(m => m.HomeModule)
   },
   {
     path: '**',

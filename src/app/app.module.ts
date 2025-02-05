@@ -17,12 +17,10 @@ import { authReducer } from './features/auth/store/auth.reducer';
 import { AuthEffects } from './features/auth/store/auth.effects';
 import { routes } from './app.routes';
 import { ProfileModule } from './features/profile/profile.module';
-import { HomeModule } from './features/home/home.module';
 
 @NgModule({
   declarations: [
     AppComponent,
-    
   ],
   imports: [
     BrowserModule,
@@ -38,7 +36,6 @@ import { HomeModule } from './features/home/home.module';
     CoreModule,
     AuthModule,
     ProfileModule,
-    HomeModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

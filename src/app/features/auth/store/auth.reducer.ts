@@ -11,13 +11,21 @@ export const initialState: AuthState = {
 
 export const authReducer = createReducer(
   initialState,
-  
+
+  // Init Auth
+  on(AuthActions.initAuth, (state) => ({
+    ...state,
+    loading: true,
+    error: null
+  })),
+
+  // Login
   on(AuthActions.login, (state) => ({
     ...state,
     loading: true,
     error: null
   })),
-  
+
   on(AuthActions.loginSuccess, (state, { user }) => ({
     ...state,
     user,
@@ -25,14 +33,16 @@ export const authReducer = createReducer(
     error: null,
     isAuthenticated: true
   })),
-  
+
   on(AuthActions.loginFailure, (state, { error }) => ({
     ...state,
+    user: null,
     loading: false,
     error,
     isAuthenticated: false
   })),
 
+  // Register
   on(AuthActions.register, (state) => ({
     ...state,
     loading: true,
@@ -54,17 +64,51 @@ export const authReducer = createReducer(
     isAuthenticated: false
   })),
 
+  // Logout
   on(AuthActions.logout, (state) => ({
     ...state,
-    loading: true
+    loading: true,
+    error: null
   })),
 
   on(AuthActions.logoutSuccess, () => ({
     ...initialState
   })),
 
-  on(AuthActions.initAuth, (state) => ({
+  // Update Profile
+  on(AuthActions.updateProfile, (state) => ({
     ...state,
-    loading: true
+    loading: true,
+    error: null
+  })),
+
+  on(AuthActions.updateProfileSuccess, (state, { user }) => ({
+    ...state,
+    user,
+    loading: false,
+    error: null
+  })),
+
+  on(AuthActions.updateProfileFailure, (state, { error }) => ({
+    ...state,
+    loading: false,
+    error
+  })),
+
+  // Delete Account
+  on(AuthActions.deleteAccount, (state) => ({
+    ...state,
+    loading: true,
+    error: null
+  })),
+
+  on(AuthActions.deleteAccountSuccess, () => ({
+    ...initialState
+  })),
+
+  on(AuthActions.deleteAccountFailure, (state, { error }) => ({
+    ...state,
+    loading: false,
+    error
   }))
 ); 

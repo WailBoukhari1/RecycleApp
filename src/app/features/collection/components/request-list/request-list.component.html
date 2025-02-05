@@ -1,0 +1,78 @@
+<div class="max-w-6xl mx-auto">
+  <mat-card>
+    <mat-card-header class="flex justify-between items-center">
+      <mat-card-title>My Collection Requests</mat-card-title>
+      <button mat-raised-button color="primary" routerLink="/collection/create">
+        Create New Request
+      </button>
+    </mat-card-header>
+
+    <mat-card-content>
+      <table mat-table [dataSource]="requests" class="w-full">
+        <!-- Waste Type Column -->
+        <ng-container matColumnDef="wasteType">
+          <th mat-header-cell *matHeaderCellDef>Waste Type</th>
+          <td mat-cell *matCellDef="let request">{{request.wasteType | titlecase}}</td>
+        </ng-container>
+
+        <!-- Weight Column -->
+        <ng-container matColumnDef="weight">
+          <th mat-header-cell *matHeaderCellDef>Weight (kg)</th>
+          <td mat-cell *matCellDef="let request">{{request.weight}}</td>
+        </ng-container>
+
+        <!-- Date Column -->
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let request">
+            {{request.timeSlot.date | date}} {{request.timeSlot.startTime}} - {{request.timeSlot.endTime}}
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let request">
+            <span [class]="getStatusClass(request.status)">
+              {{request.status | titlecase}}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let request">
+            <button mat-icon-button [matMenuTriggerFor]="menu">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="viewRequest(request.id)">
+                <mat-icon>visibility</mat-icon>
+                <span>View</span>
+              </button>
+              <button mat-menu-item (click)="editRequest(request.id)" 
+                      *ngIf="request.status === 'pending'">
+                <mat-icon>edit</mat-icon>
+                <span>Edit</span>
+              </button>
+              <button mat-menu-item (click)="deleteRequest(request.id)"
+                      *ngIf="request.status === 'pending'"
+                      class="text-red-600">
+                <mat-icon>delete</mat-icon>
+                <span>Delete</span>
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <div *ngIf="requests.length === 0" class="text-center py-8 text-gray-500">
+        No collection requests found. Create your first request!
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div> 

@@ -2,11 +2,24 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import * as AuthActions from '../../store/auth.actions';
-import { selectAuthError, selectAuthLoading } from '../../store/auth.selectors';
+import { selectAuthLoading, selectAuthError } from '../../store/auth.selectors';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
+  styles: [`
+    :host {
+      @apply block min-h-screen bg-gray-50 py-8;
+    }
+
+    mat-form-field {
+      @apply w-full;
+    }
+
+    .mat-mdc-card {
+      @apply p-6;
+    }
+  `]
 })
 export class LoginComponent {
   loginForm: FormGroup;
