@@ -6,11 +6,13 @@
         <mat-card-title>My Points</mat-card-title>
       </mat-card-header>
       <mat-card-content class="p-6">
-        <div *ngIf="currentUser$ | async as user" class="text-center">
+        <div class="text-center">
           <div class="text-5xl font-bold text-blue-600 mb-4">
-            {{ user.points || 0 }}
+            {{ points$ | async }}
           </div>
           <p class="text-gray-600">Available Points</p>
+          <mat-progress-bar *ngIf="loading$ | async" mode="indeterminate" class="mt-4"></mat-progress-bar>
+          <p *ngIf="error$ | async as error" class="text-red-600 mt-2">{{ error }}</p>
         </div>
       </mat-card-content>
     </mat-card>
@@ -30,9 +32,10 @@
                 <div class="text-gray-600">{{ tier.points }} points</div>
               </div>
               <button mat-raised-button color="primary"
-                      [disabled]="!(currentUser$ | async)?.points || ((currentUser$ | async)?.points || 0) < tier.points"
+                      [disabled]="(loading$ | async) || ((points$ | async) || 0) < tier.points"
                       (click)="redeemPoints(tier)">
-                Redeem
+                <mat-icon *ngIf="loading$ | async">hourglass_empty</mat-icon>
+                <span>{{ (loading$ | async) ? 'Processing...' : 'Redeem' }}</span>
               </button>
             </div>
           </div>

@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable, of, throwError } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { POINTS_CONFIG, REWARD_TIERS } from '../models/collection.model';
+import {  REWARD_TIERS } from '../models/collection.model';
 
 export interface RewardVoucher {
   id: string;
@@ -74,7 +74,6 @@ export class PointsService {
       points: updatedPoints
     }).pipe(
       switchMap(() => {
-        // Create and save voucher after points are updated
         const voucher: RewardVoucher = {
           id: Date.now().toString(),
           userId: currentUser.id,

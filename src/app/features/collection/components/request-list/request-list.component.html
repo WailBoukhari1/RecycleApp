@@ -108,19 +108,22 @@
                   <mat-icon>visibility</mat-icon>
                 </button>
 
-                <button mat-icon-button color="accent"
-                        [matTooltip]="request.status === 'pending' ? 'Edit Request' : 'Cannot edit non-pending request'"
-                        (click)="editRequest(request)"
-                        [disabled]="!canEditRequest(request)">
-                  <mat-icon>edit</mat-icon>
-                </button>
+                <!-- Only show edit and delete buttons for individuals -->
+                <ng-container *ngIf="userRole === 'individual'">
+                  <button mat-icon-button color="accent"
+                          [matTooltip]="request.status === 'pending' ? 'Edit Request' : 'Cannot edit non-pending request'"
+                          (click)="editRequest(request)"
+                          [disabled]="!canEditRequest(request)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
 
-                <button mat-icon-button color="warn"
-                        [matTooltip]="request.status === 'pending' ? 'Delete Request' : 'Cannot delete non-pending request'"
-                        (click)="deleteRequest(request)"
-                        [disabled]="!canDeleteRequest(request)">
-                  <mat-icon>delete</mat-icon>
-                </button>
+                  <button mat-icon-button color="warn"
+                          [matTooltip]="request.status === 'pending' ? 'Delete Request' : 'Cannot delete non-pending request'"
+                          (click)="deleteRequest(request)"
+                          [disabled]="!canDeleteRequest(request)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </ng-container>
               </div>
             </td>
           </ng-container>

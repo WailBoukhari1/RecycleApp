@@ -1,6 +1,21 @@
 import { createAction, props } from '@ngrx/store';
 import { RewardVoucher } from '../../../core/services/points.service';
 
+// Load Points
+export const loadPoints = createAction(
+  '[Points] Load Points'
+);
+
+export const loadPointsSuccess = createAction(
+  '[Points] Load Points Success',
+  props<{ points: number }>()
+);
+
+export const loadPointsFailure = createAction(
+  '[Points] Load Points Failure',
+  props<{ error: string }>()
+);
+
 // Load Vouchers
 export const loadVouchers = createAction(
   '[Points] Load Vouchers'
@@ -19,7 +34,7 @@ export const loadVouchersFailure = createAction(
 // Redeem Points
 export const redeemPoints = createAction(
   '[Points] Redeem Points',
-  props<{ points: number }>()
+  props<{ points: number; value: number }>()
 );
 
 export const redeemPointsSuccess = createAction(

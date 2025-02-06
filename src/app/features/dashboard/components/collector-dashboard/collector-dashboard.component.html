@@ -2,148 +2,144 @@
   <div class="container mx-auto px-4">
     <!-- Welcome Section -->
     <header class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome back, {{(user$ | async)?.firstName}}!</h1>
-      <p class="text-gray-600">Manage your collection activities and track your performance.</p>
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">
+        Welcome back, {{ (user$ | async)?.firstName }}!
+      </h1>
+      <p class="text-gray-600">
+        Monitor your collection activities and manage requests in your area.
+      </p>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Stats Card -->
-      <mat-card class="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-        <mat-card-content>
-          <div class="flex items-center justify-between mb-4">
-            <div class="text-lg font-medium">Collections Today</div>
-            <mat-icon class="text-blue-200">recycling</mat-icon>
-          </div>
-          <div class="text-3xl font-bold mb-2">5</div>
-          <div class="text-sm text-blue-100">Total weight: 25kg</div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Performance Card -->
-      <mat-card class="bg-gradient-to-br from-green-500 to-green-600 text-white">
-        <mat-card-content>
-          <div class="flex items-center justify-between mb-4">
-            <div class="text-lg font-medium">Success Rate</div>
-            <mat-icon class="text-green-200">trending_up</mat-icon>
-          </div>
-          <div class="text-3xl font-bold mb-2">95%</div>
-          <div class="text-sm text-green-100">Last 30 days</div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Quick Actions Card -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Quick Actions</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="!mt-4">
-          <div class="grid grid-cols-2 gap-4">
-            <button mat-stroked-button color="primary" (click)="navigateToAvailableCollections()">
-              <mat-icon>search</mat-icon>
-              <span class="ml-2">Find Requests</span>
-            </button>
-            <button mat-stroked-button color="primary" (click)="navigateToActiveCollections()">
-              <mat-icon>local_shipping</mat-icon>
-              <span class="ml-2">Active Jobs</span>
-            </button>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Recent Collections Card -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Recent Collections</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="!mt-4">
-          <div class="space-y-4">
-            <div class="flex items-center gap-3 text-sm">
-              <div class="h-2 w-2 rounded-full bg-green-500"></div>
-              <span class="text-gray-600">Plastic collection - 5kg</span>
-              <span class="ml-auto text-gray-500">2h ago</span>
-            </div>
-            <div class="flex items-center gap-3 text-sm">
-              <div class="h-2 w-2 rounded-full bg-green-500"></div>
-              <span class="text-gray-600">Glass collection - 3kg</span>
-              <span class="ml-auto text-gray-500">4h ago</span>
-            </div>
-            <div class="flex items-center gap-3 text-sm">
-              <div class="h-2 w-2 rounded-full bg-green-500"></div>
-              <span class="text-gray-600">Paper collection - 4kg</span>
-              <span class="ml-auto text-gray-500">6h ago</span>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Collection Stats Card -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Collection Stats</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="!mt-4">
-          <div class="space-y-4">
+    <!-- Statistics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Total Collections Card -->
+      <mat-card class="bg-gradient-to-br from-blue-50 to-blue-100">
+        <mat-card-content class="p-6">
+          <div class="flex items-center justify-between">
             <div>
-              <div class="flex justify-between mb-1 text-sm">
-                <span class="text-gray-600">Plastic</span>
-                <span class="text-gray-900 font-medium">250kg</span>
-              </div>
-              <div class="h-2 bg-gray-200 rounded-full">
-                <div class="h-2 bg-blue-500 rounded-full" style="width: 80%"></div>
-              </div>
+              <h3 class="text-lg font-semibold text-gray-800">Total Collections</h3>
+              <p class="text-3xl font-bold text-blue-600 mt-2">
+                {{ totalCollections$ | async }}
+              </p>
             </div>
-            <div>
-              <div class="flex justify-between mb-1 text-sm">
-                <span class="text-gray-600">Paper</span>
-                <span class="text-gray-900 font-medium">180kg</span>
-              </div>
-              <div class="h-2 bg-gray-200 rounded-full">
-                <div class="h-2 bg-green-500 rounded-full" style="width: 60%"></div>
-              </div>
-            </div>
-            <div>
-              <div class="flex justify-between mb-1 text-sm">
-                <span class="text-gray-600">Glass</span>
-                <span class="text-gray-900 font-medium">120kg</span>
-              </div>
-              <div class="h-2 bg-gray-200 rounded-full">
-                <div class="h-2 bg-yellow-500 rounded-full" style="width: 40%"></div>
-              </div>
-            </div>
+            <mat-icon class="text-blue-500 text-4xl">inventory_2</mat-icon>
           </div>
         </mat-card-content>
       </mat-card>
 
-      <!-- Schedule Card -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Today's Schedule</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="!mt-4">
-          <div class="space-y-4">
-            <div class="p-4 border border-gray-200 rounded-lg">
-              <div class="flex items-center justify-between mb-2">
-                <span class="font-medium">Plastic Collection</span>
-                <span class="text-sm text-gray-500">14:00</span>
-              </div>
-              <p class="text-sm text-gray-600 mb-2">Address: Hay Riad, Rabat</p>
-              <button mat-stroked-button color="primary" class="w-full">
-                View Details
-              </button>
+      <!-- Active Collections -->
+      <mat-card class="bg-gradient-to-br from-green-50 to-green-100">
+        <mat-card-content class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">Active Collections</h3>
+              <p class="text-3xl font-bold text-green-600 mt-2">
+                {{ activeCollections$ | async }}
+              </p>
             </div>
-            <div class="p-4 border border-gray-200 rounded-lg">
-              <div class="flex items-center justify-between mb-2">
-                <span class="font-medium">Mixed Materials</span>
-                <span class="text-sm text-gray-500">16:30</span>
-              </div>
-              <p class="text-sm text-gray-600 mb-2">Address: Agdal, Rabat</p>
-              <button mat-stroked-button color="primary" class="w-full">
-                View Details
-              </button>
-            </div>
+            <mat-icon class="text-green-500 text-4xl">local_shipping</mat-icon>
           </div>
         </mat-card-content>
       </mat-card>
+
+      <!-- Total Weight Collected -->
+      <mat-card class="bg-gradient-to-br from-purple-50 to-purple-100">
+        <mat-card-content class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">Total Weight</h3>
+              <p class="text-3xl font-bold text-purple-600 mt-2">
+                {{ totalWeight$ | async | number:'1.0-1' }} kg
+              </p>
+            </div>
+            <mat-icon class="text-purple-500 text-4xl">scale</mat-icon>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Available Requests -->
+      <mat-card class="bg-gradient-to-br from-yellow-50 to-yellow-100">
+        <mat-card-content class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">Available Requests</h3>
+              <p class="text-3xl font-bold text-yellow-600 mt-2">
+                {{ availableRequests$ | async }}
+              </p>
+            </div>
+            <mat-icon class="text-yellow-500 text-4xl">pending_actions</mat-icon>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Recent Collections -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Recent Collections</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="p-6">
+        <div class="overflow-x-auto">
+          <table mat-table [dataSource]="recentCollections$" class="w-full">
+            <!-- Date Column -->
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef>Date</th>
+              <td mat-cell *matCellDef="let collection">
+                {{collection.date | date}}
+              </td>
+            </ng-container>
+
+            <!-- Address Column -->
+            <ng-container matColumnDef="address">
+              <th mat-header-cell *matHeaderCellDef>Collection Address</th>
+              <td mat-cell *matCellDef="let collection">
+                {{collection.collectionAddress}}
+              </td>
+            </ng-container>
+
+            <!-- Weight Column -->
+            <ng-container matColumnDef="weight">
+              <th mat-header-cell *matHeaderCellDef>Total Weight</th>
+              <td mat-cell *matCellDef="let collection">
+                {{collection.totalWeight / 1000 | number:'1.0-1'}} kg
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let collection">
+                <span [ngClass]="{
+                  'bg-green-100 text-green-800': collection.status === 'validated',
+                  'bg-yellow-100 text-yellow-800': collection.status === 'in_progress',
+                  'bg-blue-100 text-blue-800': collection.status === 'occupied'
+                }" class="px-2 py-1 rounded-full text-xs font-medium">
+                  {{collection.status | titlecase}}
+                </span>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="['date', 'address', 'weight', 'status']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['date', 'address', 'weight', 'status'];"
+                class="hover:bg-gray-50 transition-colors cursor-pointer"
+                [routerLink]="['/collection/detail', row.id]"></tr>
+          </table>
+
+          <!-- Empty State -->
+          <div *ngIf="!(recentCollections$ | async)?.length" 
+               class="text-center py-8 text-gray-500">
+            No collections yet. Start by accepting available requests!
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Quick Actions -->
+    <div class="mt-6 flex gap-4">
+      <button mat-raised-button color="primary" routerLink="/collection/available">
+        <mat-icon>search</mat-icon>
+        Browse Available Requests
+      </button>
     </div>
   </div>
 </div> 

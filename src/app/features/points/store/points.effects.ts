@@ -10,6 +10,19 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Injectable()
 export class PointsEffects {
+  loadPoints$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(PointsActions.loadPoints),
+      mergeMap(() => {
+        const currentUser = this.authService.getCurrentUser();
+        if (!currentUser) {
+          return of(PointsActions.loadPointsFailure({ error: 'User not found' }));
+        }
+        return of(PointsActions.loadPointsSuccess({ points: currentUser.points || 0 }));
+      })
+    )
+  );
+
   loadVouchers$ = createEffect(() =>
     this.actions$.pipe(
       ofType(PointsActions.loadVouchers),
@@ -40,9 +53,11 @@ export class PointsEffects {
             return PointsActions.redeemPointsSuccess({ voucher, remainingPoints });
           }),
           catchError(error => {
-            this.snackBar.open(error.message || 'Failed to redeem points', 'Close', {
-              duration: 3000
-            });
+            this.snackBar.open(
+              error.message || 'Failed to redeem points',
+              'Close',
+              { duration: 3000 }
+            );
             return of(PointsActions.redeemPointsFailure({ error: error.message }));
           })
         )
