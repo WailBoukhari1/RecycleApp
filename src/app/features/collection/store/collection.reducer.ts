@@ -4,14 +4,12 @@ import * as CollectionActions from './collection.actions';
 
 export interface CollectionState {
   requests: CollectionRequest[];
-  pendingRequests: CollectionRequest[];
   loading: boolean;
   error: string | null;
 }
 
 export const initialState: CollectionState = {
   requests: [],
-  pendingRequests: [],
   loading: false,
   error: null
 };
@@ -19,6 +17,27 @@ export const initialState: CollectionState = {
 export const collectionReducer = createReducer(
   initialState,
   
+  // Load User Requests
+  on(CollectionActions.loadUserRequests, (state) => ({
+    ...state,
+    loading: true,
+    error: null
+  })),
+  
+  on(CollectionActions.loadUserRequestsSuccess, (state, { requests }) => ({
+    ...state,
+    requests,
+    loading: false,
+    error: null
+  })),
+  
+  on(CollectionActions.loadUserRequestsFailure, (state, { error }) => ({
+    ...state,
+    loading: false,
+    error
+  })),
+  
+  // Create Request
   on(CollectionActions.createCollectionRequest, (state) => ({
     ...state,
     loading: true,
@@ -28,29 +47,11 @@ export const collectionReducer = createReducer(
   on(CollectionActions.createCollectionRequestSuccess, (state, { request }) => ({
     ...state,
     requests: [...state.requests, request],
-    pendingRequests: [...state.pendingRequests, request],
-    loading: false
-  })),
-  
-  on(CollectionActions.createCollectionRequestFailure, (state, { error }) => ({
-    ...state,
     loading: false,
-    error
-  })),
-  
-  on(CollectionActions.loadPendingRequests, (state) => ({
-    ...state,
-    loading: true,
     error: null
   })),
   
-  on(CollectionActions.loadPendingRequestsSuccess, (state, { requests }) => ({
-    ...state,
-    pendingRequests: requests,
-    loading: false
-  })),
-  
-  on(CollectionActions.loadPendingRequestsFailure, (state, { error }) => ({
+  on(CollectionActions.createCollectionRequestFailure, (state, { error }) => ({
     ...state,
     loading: false,
     error

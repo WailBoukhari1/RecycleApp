@@ -8,11 +8,6 @@ export const selectAllRequests = createSelector(
   (state) => state.requests
 );
 
-export const selectPendingRequests = createSelector(
-  selectCollectionState,
-  (state) => state.pendingRequests
-);
-
 export const selectLoading = createSelector(
   selectCollectionState,
   (state) => state.loading

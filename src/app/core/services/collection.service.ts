@@ -1,14 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { CollectionRequest, RequestStatus, POINTS_CONFIG } from '../models/collection.model';
+import { CollectionRequest, RequestStatus, POINTS_CONFIG, COLLECTION_CONSTRAINTS } from '../models/collection.model';
+import { AuthService } from './auth.service';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CollectionService {
   private readonly COLLECTIONS_KEY = 'collections';
+  private readonly MAX_WEIGHT_KG = 10;
+  private readonly MIN_WEIGHT_GRAMS = 1000;
 
-  constructor() {
+  constructor(private authService: AuthService) {
     this.initializeCollections();
   }
 
@@ -27,14 +31,68 @@ export class CollectionService {
     localStorage.setItem(this.COLLECTIONS_KEY, JSON.stringify(collections));
   }
 
+  getAllCollections(): CollectionRequest[] {
+    return this.getCollections();
+  }
+
+  private normalizeCity(city: string): string {
+    // Remove extra spaces, make lowercase, and remove special characters
+    return city.trim()
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/[^a-z0-9\s]/g, '');
+  }
+
+  private validateRequestWeight(request: any): { isValid: boolean; message?: string } {
+    const totalWeight = request.wastes.reduce((sum: number, waste: any) => sum + waste.weight, 0);
+    
+    if (totalWeight < this.MIN_WEIGHT_GRAMS) {
+      return { 
+        isValid: false, 
+        message: `Minimum total weight must be ${this.MIN_WEIGHT_GRAMS / 1000}kg` 
+      };
+    }
+
+    if (totalWeight > this.MAX_WEIGHT_KG * 1000) {
+      return { 
+        isValid: false, 
+        message: `Maximum total weight cannot exceed ${this.MAX_WEIGHT_KG}kg` 
+      };
+    }
+
+    return { isValid: true };
+  }
+
   createRequest(request: Omit<CollectionRequest, 'id' | 'createdAt' | 'status' | 'updatedAt'>): Observable<CollectionRequest> {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      return throwError(() => new Error('No user logged in'));
+    }
+
+    if (!currentUser.address?.city) {
+      return throwError(() => new Error('User profile is incomplete: missing city'));
+    }
+
+    // Validate total weight
+    const weightValidation = this.validateRequestWeight(request);
+    if (!weightValidation.isValid) {
+      return throwError(() => new Error(weightValidation.message));
+    }
+
     const newRequest: CollectionRequest = {
       ...request,
       id: Date.now().toString(),
+      userId: currentUser.id,
+      userCity: currentUser.address.city, // Use the actual city from user's address
+      collectionAddress: request.collectionAddress || currentUser.address.street + ', ' + currentUser.address.district + ', ' + currentUser.address.city,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       status: 'pending'
     };
+
+    console.log('Creating new request with city:', newRequest.userCity);
+
     const collections = this.getCollections();
     collections.push(newRequest);
     this.saveCollections(collections);
@@ -52,14 +110,32 @@ export class CollectionService {
 
   getPendingRequests(): Observable<CollectionRequest[]> {
     const collections = this.getCollections();
-    return of(collections.filter(request => request.status === 'pending'));
+    const currentUser = this.authService.getCurrentUser();
+    return of(collections.filter(request => 
+      request.userId === currentUser?.id && request.status === 'pending'
+    ));
   }
 
-  getAvailableRequests(city: string): Observable<CollectionRequest[]> {
+  getAvailableRequests(collectorCity: string): Observable<CollectionRequest[]> {
+    if (!collectorCity) {
+      return throwError(() => new Error('Collector city is required'));
+    }
+
     const collections = this.getCollections();
-    return of(collections.filter(request => 
-      request.city === city && request.status === 'pending'
-    ));
+    // Show all requests from the collector's city
+    const cityRequests = collections.filter(request => 
+      request.userCity.toLowerCase() === collectorCity.toLowerCase()
+    );
+
+    console.log('Available requests debug:', {
+      collectorCity,
+      totalRequests: collections.length,
+      cityRequests: cityRequests.length,
+      requestCities: collections.map(r => r.userCity),
+      matches: cityRequests
+    });
+    
+    return of(cityRequests);
   }
 
   updateRequestStatus(
@@ -74,6 +150,16 @@ export class CollectionService {
     
     if (index === -1) {
       return throwError(() => new Error('Request not found'));
+    }
+
+    // Verify city match before updating status
+    const collector = this.authService.getCurrentUser();
+    if (!collector?.address?.city) {
+      return throwError(() => new Error('Collector profile is incomplete'));
+    }
+
+    if (this.normalizeCity(collections[index].userCity) !== this.normalizeCity(collector.address.city)) {
+      return throwError(() => new Error('City mismatch: Collector can only handle requests from their city'));
     }
 
     const updatedRequest: CollectionRequest = {
@@ -139,5 +225,33 @@ export class CollectionService {
     this.saveCollections(collections);
 
     return of(updatedRequest);
+  }
+
+  getUserRequests(): Observable<CollectionRequest[]> {
+    const collections = this.getCollections();
+    const currentUser = this.authService.getCurrentUser();
+    return of(collections.filter(request => request.userId === currentUser?.id));
+  }
+
+  // Get collector's active requests (occupied, in_progress)
+  getCollectorRequests(collectorId: string): Observable<CollectionRequest[]> {
+    if (!collectorId) {
+      return throwError(() => new Error('Collector ID is required'));
+    }
+
+    const collections = this.getCollections();
+    const collectorRequests = collections.filter(request => 
+      request.collectorId === collectorId && 
+      ['occupied', 'in_progress'].includes(request.status)
+    );
+
+    console.log('Collector requests debug:', {
+      collectorId,
+      totalRequests: collections.length,
+      activeRequests: collectorRequests.length,
+      requests: collectorRequests
+    });
+    
+    return of(collectorRequests);
   }
 } 

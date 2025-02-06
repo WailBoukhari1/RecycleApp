@@ -1,77 +1,153 @@
-<div class="max-w-6xl mx-auto">
-  <mat-card>
-    <mat-card-header class="flex justify-between items-center">
-      <mat-card-title>My Collection Requests</mat-card-title>
-      <button mat-raised-button color="primary" routerLink="/collection/create">
-        Create New Request
-      </button>
-    </mat-card-header>
+<div class="container mx-auto p-6">
+  <mat-card class="shadow-lg">
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-t-lg">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-2xl font-bold">{{ userRole === 'individual' ? 'My Collection Requests' : 'Available Requests' }}</h1>
+          <p class="text-sm opacity-90 mt-1">Manage your recycling collection requests</p>
+        </div>
+        <button *ngIf="userRole === 'individual'"
+                mat-raised-button 
+                class="bg-white text-blue-800 hover:bg-blue-50"
+                routerLink="/collection/create">
+          <mat-icon>add</mat-icon>
+          New Request
+        </button>
+      </div>
+    </div>
 
-    <mat-card-content>
-      <table mat-table [dataSource]="requests" class="w-full">
-        <!-- Waste Type Column -->
-        <ng-container matColumnDef="wasteType">
-          <th mat-header-cell *matHeaderCellDef>Waste Type</th>
-          <td mat-cell *matCellDef="let request">{{request.wasteType | titlecase}}</td>
-        </ng-container>
+    <!-- Content Section -->
+    <mat-card-content class="p-6">
+      <!-- Stats Summary -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <div class="text-sm text-gray-600">Total Requests</div>
+          <div class="text-2xl font-bold">{{ totalRequests$ | async }}</div>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <div class="text-sm text-gray-600">Pending Requests</div>
+          <div class="text-2xl font-bold text-yellow-600">
+            {{ pendingRequests$ | async }}
+          </div>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <div class="text-sm text-gray-600">Completed Requests</div>
+          <div class="text-2xl font-bold text-green-600">
+            {{ completedRequests$ | async }}
+          </div>
+        </div>
+      </div>
 
-        <!-- Weight Column -->
-        <ng-container matColumnDef="weight">
-          <th mat-header-cell *matHeaderCellDef>Weight (kg)</th>
-          <td mat-cell *matCellDef="let request">{{request.weight}}</td>
-        </ng-container>
+      <!-- Table Section -->
+      <div class="bg-white rounded-lg overflow-hidden border">
+        <table mat-table [dataSource]="requests$" class="w-full">
+          <!-- Waste Types Column -->
+          <ng-container matColumnDef="wastes">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 font-semibold">Waste Types</th>
+            <td mat-cell *matCellDef="let request">
+              <div class="flex flex-wrap gap-2">
+                <span *ngFor="let waste of request.wastes" 
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      [ngClass]="{
+                        'bg-green-100 text-green-800': waste.type === 'plastic',
+                        'bg-blue-100 text-blue-800': waste.type === 'glass',
+                        'bg-yellow-100 text-yellow-800': waste.type === 'paper',
+                        'bg-purple-100 text-purple-800': waste.type === 'metal'
+                      }">
+                  {{waste.type | titlecase}}
+                  <span class="ml-1 text-xs opacity-75">{{waste.weight / 1000}}kg</span>
+                </span>
+              </div>
+            </td>
+          </ng-container>
 
-        <!-- Date Column -->
-        <ng-container matColumnDef="date">
-          <th mat-header-cell *matHeaderCellDef>Date</th>
-          <td mat-cell *matCellDef="let request">
-            {{request.timeSlot.date | date}} {{request.timeSlot.startTime}} - {{request.timeSlot.endTime}}
-          </td>
-        </ng-container>
+          <!-- Total Weight Column -->
+          <ng-container matColumnDef="totalWeight">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 font-semibold">Total Weight</th>
+            <td mat-cell *matCellDef="let request">
+              <span class="font-medium">{{getTotalWeight(request)}} kg</span>
+            </td>
+          </ng-container>
 
-        <!-- Status Column -->
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let request">
-            <span [class]="getStatusClass(request.status)">
-              {{request.status | titlecase}}
-            </span>
-          </td>
-        </ng-container>
+          <!-- Date Column -->
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 font-semibold">Date</th>
+            <td mat-cell *matCellDef="let request">
+              <div class="flex flex-col">
+                <span class="font-medium">{{request.date | date}}</span>
+                <span class="text-sm text-gray-500">{{request.timeSlot}}</span>
+              </div>
+            </td>
+          </ng-container>
 
-        <!-- Actions Column -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef>Actions</th>
-          <td mat-cell *matCellDef="let request">
-            <button mat-icon-button [matMenuTriggerFor]="menu">
-              <mat-icon>more_vert</mat-icon>
-            </button>
-            <mat-menu #menu="matMenu">
-              <button mat-menu-item (click)="viewRequest(request.id)">
-                <mat-icon>visibility</mat-icon>
-                <span>View</span>
-              </button>
-              <button mat-menu-item (click)="editRequest(request.id)" 
-                      *ngIf="request.status === 'pending'">
-                <mat-icon>edit</mat-icon>
-                <span>Edit</span>
-              </button>
-              <button mat-menu-item (click)="deleteRequest(request.id)"
-                      *ngIf="request.status === 'pending'"
-                      class="text-red-600">
-                <mat-icon>delete</mat-icon>
-                <span>Delete</span>
-              </button>
-            </mat-menu>
-          </td>
-        </ng-container>
+          <!-- Time Slot Column -->
+          <ng-container matColumnDef="timeSlot">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 font-semibold">Time Slot</th>
+            <td mat-cell *matCellDef="let request">{{request.timeSlot}}</td>
+          </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-      </table>
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 font-semibold">Status</th>
+            <td mat-cell *matCellDef="let request">
+              <span [class]="getStatusClass(request.status)">
+                {{request.status | titlecase}}
+              </span>
+            </td>
+          </ng-container>
 
-      <div *ngIf="requests.length === 0" class="text-center py-8 text-gray-500">
-        No collection requests found. Create your first request!
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 font-semibold">Actions</th>
+            <td mat-cell *matCellDef="let request">
+              <div class="flex gap-2">
+                <button mat-icon-button color="primary" 
+                        [matTooltip]="'View Details'"
+                        (click)="viewRequest(request.id)">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+
+                <button mat-icon-button color="accent"
+                        [matTooltip]="request.status === 'pending' ? 'Edit Request' : 'Cannot edit non-pending request'"
+                        (click)="editRequest(request)"
+                        [disabled]="!canEditRequest(request)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+
+                <button mat-icon-button color="warn"
+                        [matTooltip]="request.status === 'pending' ? 'Delete Request' : 'Cannot delete non-pending request'"
+                        (click)="deleteRequest(request)"
+                        [disabled]="!canDeleteRequest(request)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+              class="hover:bg-gray-50 transition-colors cursor-pointer"></tr>
+        </table>
+
+        <!-- Empty State -->
+        <div *ngIf="(requests$ | async)?.length === 0" 
+             class="flex flex-col items-center justify-center py-12 px-4 bg-gray-50">
+          <mat-icon class="text-gray-400 transform scale-150 mb-4">inbox</mat-icon>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No Requests Found</h3>
+          <p class="text-gray-500 text-center mb-4">
+            {{ userRole === 'individual' ? 
+              'Start your recycling journey by creating your first collection request.' :
+              'No collection requests are available in your area at the moment.' }}
+          </p>
+          <button *ngIf="userRole === 'individual'"
+                  mat-raised-button 
+                  color="primary"
+                  routerLink="/collection/create">
+            <mat-icon>add</mat-icon>
+            Create First Request
+          </button>
+        </div>
       </div>
     </mat-card-content>
   </mat-card>

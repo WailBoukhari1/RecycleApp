@@ -1,114 +1,183 @@
-<div class="max-w-4xl mx-auto" *ngIf="request">
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>Collection Request Details</mat-card-title>
-      <span [class]="getStatusClass(request.status)" class="ml-4">
+<div *ngIf="request" class="max-w-4xl mx-auto bg-white rounded-lg shadow">
+  <div class="p-6 border-b">
+    <div class="flex justify-between items-center">
+      <h1 class="text-2xl font-bold">Collection Request Details</h1>
+      <span [class]="getStatusClass(request.status)">
         {{request.status | titlecase}}
       </span>
-    </mat-card-header>
+    </div>
+  </div>
 
-    <mat-card-content class="space-y-6">
-      <!-- Waste Details -->
-      <section>
-        <h3 class="text-lg font-medium mb-4">Waste Details</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div *ngFor="let waste of request.wastes">
-            <mat-card class="bg-gray-50">
-              <mat-card-content>
-                <p class="font-medium">{{waste.type | titlecase}}</p>
-                <p>Weight: {{waste.weight}} kg</p>
-                <div *ngIf="waste.photos?.length" class="mt-2">
-                  <p class="text-sm text-gray-600 mb-1">Photos:</p>
-                  <div class="grid grid-cols-3 gap-2">
-                    <img *ngFor="let photo of waste.photos" [src]="photo" 
-                         class="w-full h-24 object-cover rounded" />
-                  </div>
-                </div>
-              </mat-card-content>
-            </mat-card>
+  <div class="p-6 space-y-8">
+    <!-- Waste Details -->
+    <section>
+      <h2 class="text-xl font-semibold mb-4">Waste Details</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div *ngFor="let waste of request.wastes" 
+             class="p-4 bg-gray-50 rounded-lg">
+          <p class="font-medium capitalize">{{waste.type}}</p>
+          <p class="text-gray-600">Weight: {{waste.weight / 1000}} kg</p>
+          
+          <!-- Waste Photos -->
+          <div *ngIf="waste.photos?.length" class="mt-2">
+            <p class="text-sm text-gray-600 mb-2">Photos:</p>
+            <div class="grid grid-cols-3 gap-2">
+              <div *ngFor="let photo of waste.photos" 
+                   class="aspect-square rounded-lg overflow-hidden">
+                <img [src]="photo" class="w-full h-full object-cover">
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- Collection Details -->
-      <section>
-        <h3 class="text-lg font-medium mb-4">Collection Details</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p class="text-gray-600">Address</p>
-            <p>{{request.address}}</p>
-          </div>
-          <div>
-            <p class="text-gray-600">Time Slot</p>
-            <p>{{request.date | date}}</p>
-            <p>{{request.timeSlot}}</p>
-          </div>
-          <div *ngIf="request.notes">
-            <p class="text-gray-600">Notes</p>
-            <p>{{request.notes}}</p>
-          </div>
+    <!-- Collection Details -->
+    <section>
+      <h2 class="text-xl font-semibold mb-4">Collection Details</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <p class="text-gray-600">Collection Address</p>
+          <p class="font-medium">{{request.collectionAddress}}</p>
         </div>
-      </section>
+        <div>
+          <p class="text-gray-600">Collection Time</p>
+          <p class="font-medium">{{request.date | date}}</p>
+          <p class="font-medium">{{request.timeSlot}}</p>
+        </div>
+        <div *ngIf="request.notes">
+          <p class="text-gray-600">Additional Notes</p>
+          <p class="font-medium">{{request.notes}}</p>
+        </div>
+      </div>
+    </section>
 
-      <!-- Collector Verification (Only for collectors) -->
-      <section *ngIf="userRole === 'collector' && 
-                     (request.status === 'occupied' || request.status === 'in_progress')">
-        <h3 class="text-lg font-medium mb-4">Verification</h3>
-        <form [formGroup]="verificationForm" class="space-y-4">
-          <mat-form-field class="w-full">
-            <mat-label>Verified Weight (kg)</mat-label>
-            <input matInput type="number" formControlName="verifiedWeight" min="0.1" step="0.1">
-          </mat-form-field>
+    <!-- Collector Verification Section -->
+    <section *ngIf="userRole === 'collector' && 
+                   (request.status === 'in_progress' || request.status === 'occupied')">
+      <h2 class="text-xl font-semibold mb-4">Collection Verification</h2>
+      <form [formGroup]="verificationForm" class="space-y-4">
+        <!-- Verified Weight -->
+        <mat-form-field class="w-full">
+          <mat-label>Verified Weight (kg)</mat-label>
+          <input matInput type="number" formControlName="verifiedWeight" 
+                 min="0.1" step="0.1" required>
+          <mat-error *ngIf="verificationForm.get('verifiedWeight')?.errors?.['required']">
+            Verified weight is required
+          </mat-error>
+          <mat-error *ngIf="verificationForm.get('verifiedWeight')?.errors?.['min']">
+            Weight must be at least 0.1 kg
+          </mat-error>
+        </mat-form-field>
 
-          <div class="photo-upload" (click)="fileInput.click()">
-            <input #fileInput type="file" hidden multiple accept="image/*" (change)="onFileSelected($event)">
-            <mat-icon>cloud_upload</mat-icon>
-            <p>Click to upload verification photos</p>
-            <p *ngIf="selectedPhotos.length" class="text-sm text-gray-600">
-              {{selectedPhotos.length}} photos selected
-            </p>
-          </div>
+        <!-- Verification Photos -->
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer
+                    hover:border-blue-500 transition-colors"
+             (click)="fileInput.click()">
+          <input #fileInput type="file" hidden multiple accept="image/*" 
+                 (change)="onFileSelected($event)">
+          <mat-icon class="text-gray-400">add_photo_alternate</mat-icon>
+          <p class="mt-2 text-sm text-gray-500">
+            Click to upload verification photos
+          </p>
+          <p *ngIf="selectedPhotos.length" class="mt-1 text-sm text-blue-500">
+            {{selectedPhotos.length}} photo(s) selected
+          </p>
+        </div>
 
-          <mat-form-field class="w-full">
-            <mat-label>Notes</mat-label>
-            <textarea matInput formControlName="notes" rows="3"></textarea>
-          </mat-form-field>
-        </form>
-      </section>
+        <!-- Notes -->
+        <mat-form-field class="w-full">
+          <mat-label>Verification Notes</mat-label>
+          <textarea matInput formControlName="notes" rows="3"
+                    placeholder="Add any notes about the collection..."></textarea>
+        </mat-form-field>
+      </form>
+    </section>
 
-      <!-- Action Buttons -->
-      <section class="flex justify-end gap-4">
-        <!-- Collector Actions -->
-        <ng-container *ngIf="userRole === 'collector'">
-          <button *ngIf="request.status === 'occupied'"
-                  mat-raised-button color="primary"
+    <!-- Action Buttons -->
+    <section class="flex justify-end gap-4">
+      <!-- Collector Actions -->
+      <ng-container *ngIf="userRole === 'collector'">
+        <!-- Pending to Occupied -->
+        <button *ngIf="request.status === 'pending'"
+                mat-raised-button color="primary"
+                (click)="updateStatus('occupied')">
+          <mat-icon>check_circle</mat-icon>
+          Accept Request
+        </button>
+
+        <!-- Occupied to In Progress -->
+        <ng-container *ngIf="request.status === 'occupied'">
+          <button mat-raised-button color="warn"
+                  (click)="updateStatus('rejected')">
+            <mat-icon>cancel</mat-icon>
+            Reject Collection
+          </button>
+          <button mat-raised-button color="primary"
                   (click)="updateStatus('in_progress')">
+            <mat-icon>play_circle</mat-icon>
             Start Collection
           </button>
-
-          <ng-container *ngIf="request.status === 'in_progress'">
-            <button mat-raised-button color="warn"
-                    (click)="updateStatus('rejected')">
-              Reject
-            </button>
-            <button mat-raised-button color="primary"
-                    [disabled]="!verificationForm.valid"
-                    (click)="updateStatus('validated')">
-              Validate
-            </button>
-          </ng-container>
         </ng-container>
 
-        <!-- Individual Actions -->
-        <ng-container *ngIf="userRole === 'individual' && request.status === 'pending'">
-          <button mat-button color="warn" routerLink="/collection/my-requests">
-            Back to List
+        <!-- In Progress to Validated/Rejected -->
+        <ng-container *ngIf="request.status === 'in_progress'">
+          <button mat-raised-button color="warn"
+                  (click)="updateStatus('rejected')">
+            <mat-icon>cancel</mat-icon>
+            Reject Collection
           </button>
-          <button mat-raised-button color="primary" routerLink="edit">
-            Edit Request
+          <button mat-raised-button color="primary"
+                  [disabled]="!verificationForm.valid"
+                  (click)="updateStatus('validated')">
+            <mat-icon>verified</mat-icon>
+            Validate Collection
           </button>
         </ng-container>
-      </section>
-    </mat-card-content>
-  </mat-card>
+      </ng-container>
+
+      <!-- Individual Actions -->
+      <ng-container *ngIf="userRole === 'individual'">
+        <button mat-raised-button color="warn"
+                (click)="deleteRequest()"
+                [disabled]="request.status !== 'pending'">
+          <mat-icon>delete</mat-icon>
+          Delete Request
+        </button>
+        <button mat-raised-button color="primary"
+                [routerLink]="['/collection/edit', request.id]"
+                [disabled]="request.status !== 'pending'">
+          <mat-icon>edit</mat-icon>
+          Edit Request
+        </button>
+      </ng-container>
+    </section>
+
+    <!-- Status Info -->
+    <div *ngIf="request.status !== 'pending'" class="mt-4 p-4 bg-gray-50 rounded-lg">
+      <p class="text-sm text-gray-600" [ngSwitch]="request.status">
+        <ng-container *ngSwitchCase="'occupied'">
+          This request has been accepted by a collector and is awaiting collection
+        </ng-container>
+        <ng-container *ngSwitchCase="'in_progress'">
+          Collection is currently in progress
+        </ng-container>
+        <ng-container *ngSwitchCase="'validated'">
+          This request has been completed successfully
+        </ng-container>
+        <ng-container *ngSwitchCase="'rejected'">
+          This request was rejected
+        </ng-container>
+      </p>
+    </div>
+
+    <!-- Back Button -->
+    <div class="flex justify-start mt-4">
+      <button mat-button color="primary" 
+              [routerLink]="['/collection', userRole === 'collector' ? 'available' : 'my-requests']">
+        <mat-icon>arrow_back</mat-icon>
+        Back to List
+      </button>
+    </div>
+  </div>
 </div> 

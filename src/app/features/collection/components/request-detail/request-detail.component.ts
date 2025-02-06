@@ -3,7 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CollectionService } from '../../../../core/services/collection.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { CollectionRequest, RequestStatus } from '../../../../core/models/collection.model';
+import { User } from '../../../../core/models/user.model';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-request-detail',
@@ -13,7 +17,7 @@ import { CollectionRequest, RequestStatus } from '../../../../core/models/collec
       @apply block p-6;
     }
     .status-chip {
-      @apply px-2 py-1 rounded-full text-sm font-medium;
+      @apply px-3 py-1 rounded-full text-sm font-medium;
     }
     .status-pending {
       @apply bg-yellow-100 text-yellow-800;
@@ -34,21 +38,20 @@ import { CollectionRequest, RequestStatus } from '../../../../core/models/collec
 })
 export class RequestDetailComponent implements OnInit {
   request: CollectionRequest | null = null;
-  verificationForm!: FormGroup;
-  userRole: 'collector' | 'individual' | null = null;
+  currentUser: User | null = null;
+  userRole: 'individual' | 'collector' = 'individual';
+  verificationForm: FormGroup;
   selectedPhotos: File[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private fb: FormBuilder,
     private collectionService: CollectionService,
-    private authService: AuthService
+    private authService: AuthService,
+    private fb: FormBuilder,
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {
-    this.createForm();
-  }
-
-  private createForm(): void {
     this.verificationForm = this.fb.group({
       verifiedWeight: ['', [Validators.required, Validators.min(0.1)]],
       notes: ['']
@@ -56,72 +59,151 @@ export class RequestDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const user = this.authService.getCurrentUser();
-    this.userRole = user?.role || null;
+    this.currentUser = this.authService.getCurrentUser();
+    this.userRole = this.currentUser?.role || 'individual';
 
     const requestId = this.route.snapshot.paramMap.get('id');
     if (requestId) {
-      this.loadRequestDetails(requestId);
-    } else {
-      this.router.navigate(['/collection/my-requests']);
+      this.loadRequest(requestId);
     }
   }
 
-  private loadRequestDetails(id: string): void {
-    this.collectionService.getRequestById(id).subscribe(
-      request => {
+  private loadRequest(id: string): void {
+    this.collectionService.getRequestById(id).subscribe({
+      next: (request) => {
         this.request = request;
+        if (request.verifiedWeight) {
+          this.verificationForm.patchValue({
+            verifiedWeight: request.verifiedWeight / 1000 // Convert to kg
+          });
+        }
       },
-      error => {
-        console.error('Error loading request:', error);
+      error: (error) => {
+        this.snackBar.open('Failed to load request details', 'Close', { duration: 3000 });
         this.router.navigate(['/collection/my-requests']);
       }
-    );
+    });
   }
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
-      // Limit to 5 photos maximum
-      const newPhotos = Array.from(input.files);
-      if (this.selectedPhotos.length + newPhotos.length > 5) {
-        return;
-      }
-      this.selectedPhotos = [...this.selectedPhotos, ...newPhotos];
+      this.selectedPhotos = Array.from(input.files);
     }
   }
 
-  updateStatus(status: RequestStatus): void {
+  updateStatus(newStatus: RequestStatus): void {
+    if (!this.request?.id || !this.currentUser?.id) return;
+
+    let dialogData = {
+      title: '',
+      message: '',
+      confirmText: 'Confirm',
+      cancelText: 'Cancel'
+    };
+
+    switch (newStatus) {
+      case 'occupied':
+        dialogData.title = 'Accept Collection Request';
+        dialogData.message = 'Are you sure you want to accept this collection request?';
+        break;
+      case 'in_progress':
+        dialogData.title = 'Start Collection';
+        dialogData.message = 'Confirm that you have arrived and are starting the collection process?';
+        break;
+      case 'validated':
+        if (!this.verificationForm.valid) {
+          this.snackBar.open('Please enter the verified weight', 'Close', { duration: 3000 });
+          return;
+        }
+        dialogData.title = 'Validate Collection';
+        dialogData.message = 'Confirm that all materials have been collected and verified?';
+        dialogData.confirmText = 'Validate';
+        break;
+      case 'rejected':
+        dialogData.title = 'Reject Collection';
+        dialogData.message = 'Are you sure you want to reject this collection? This action cannot be undone.';
+        dialogData.confirmText = 'Reject';
+        break;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: dialogData,
+      width: '400px'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        const verifiedWeight = this.verificationForm.get('verifiedWeight')?.value;
+        this.collectionService.updateRequestStatus(
+          this.request!.id!,
+          newStatus,
+          this.currentUser!.id,
+          verifiedWeight ? verifiedWeight * 1000 : undefined, // Convert to grams
+          this.selectedPhotos
+        ).subscribe({
+          next: (updatedRequest) => {
+            this.request = updatedRequest;
+            let message = '';
+            switch (newStatus) {
+              case 'occupied':
+                message = 'Request accepted successfully';
+                this.router.navigate(['/collection/active-requests']);
+                break;
+              case 'in_progress':
+                message = 'Collection started';
+                break;
+              case 'validated':
+                message = 'Collection validated successfully';
+                this.router.navigate(['/collection/available']);
+                break;
+              case 'rejected':
+                message = 'Collection rejected';
+                this.router.navigate(['/collection/available']);
+                break;
+            }
+            this.snackBar.open(message, 'Close', { duration: 3000 });
+          },
+          error: (error) => {
+            this.snackBar.open(error.message || 'Failed to update request status', 'Close', { duration: 3000 });
+          }
+        });
+      }
+    });
+  }
+
+  getStatusClass(status: RequestStatus): string {
+    return `status-chip status-${status}`;
+  }
+
+  deleteRequest(): void {
     if (!this.request?.id) return;
 
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) return;
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Delete Request',
+        message: 'Are you sure you want to delete this collection request? This action cannot be undone.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
+      }
+    });
 
-    if (status === 'validated' || status === 'rejected') {
-      if (!this.verificationForm.valid) return;
-
-      const { verifiedWeight } = this.verificationForm.value;
-      this.collectionService.updateRequestStatus(
-        this.request.id,
-        status,
-        currentUser.id,
-        verifiedWeight,
-        this.selectedPhotos
-      ).subscribe(() => {
-        this.router.navigate(['/collection/available']);
-      });
-    } else {
-      this.collectionService.updateRequestStatus(
-        this.request.id,
-        status,
-        currentUser.id
-      ).subscribe(() => {
-        this.loadRequestDetails(this.request!.id!);
-      });
-    }
-  }
-
-  getStatusClass(status: string): string {
-    return `status-chip status-${status.toLowerCase()}`;
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.collectionService.deleteRequest(this.request!.id!).subscribe({
+          next: () => {
+            this.snackBar.open('Request deleted successfully', 'Close', { duration: 3000 });
+            this.router.navigate(['/collection/my-requests']);
+          },
+          error: (error) => {
+            this.snackBar.open(
+              error.message || 'Failed to delete request. Only pending requests can be deleted.', 
+              'Close', 
+              { duration: 3000 }
+            );
+          }
+        });
+      }
+    });
   }
 } 

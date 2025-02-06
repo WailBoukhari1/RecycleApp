@@ -112,7 +112,7 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(AuthActions.logout),
       tap(() => {
-        this.authService.clearSession();
+        this.authService.logout();
       }),
       map(() => AuthActions.logoutSuccess())
     )

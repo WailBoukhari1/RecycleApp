@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { User } from '../models/user.model';
+import { User, UserRole } from '../models/user.model';
+import { Address, formatAddress } from '../models/address.model';
 
 @Injectable({
   providedIn: 'root'
@@ -10,26 +11,64 @@ export class AuthService {
   private readonly CURRENT_USER_KEY = 'currentUser';
 
   constructor() {
-    this.initializeDefaultUsers();
+    this.initializeUsers();
   }
 
-  private initializeDefaultUsers(): void {
+  private initializeUsers(): void {
     if (!localStorage.getItem(this.USERS_KEY)) {
-      const defaultCollectors: User[] = [
-        {
-          id: '1',
-          email: 'collector1@recyclehub.com',
-          password: 'password123',
-          firstName: 'John',
-          lastName: 'Collector',
-          address: 'Casablanca, Morocco',
-          phoneNumber: '+212600000001',
-          birthDate: '1990-01-01',
-          role: 'collector'
-        }
-      ];
-      localStorage.setItem(this.USERS_KEY, JSON.stringify(defaultCollectors));
+      const defaultCollector: User = {
+        id: '1',
+        email: 'collector@recycleapp.com',
+        firstName: 'Default',
+        lastName: 'Collector',
+        phoneNumber: '+212-666-123456',
+        dateOfBirth: '1990-01-01',
+        address: {
+          street: '123 Main St',
+          district: 'Downtown',
+          city: 'Casablanca',
+          postalCode: '20000'
+        },
+        role: 'collector'
+      };
+
+      localStorage.setItem(this.USERS_KEY, JSON.stringify([defaultCollector]));
     }
+  }
+
+  register(userData: Omit<User, 'id'>): Observable<User> {
+    const users = this.getUsers();
+    
+    if (users.some(u => u.email === userData.email)) {
+      return throwError(() => new Error('Email already exists'));
+    }
+
+    const newUser: User = {
+      ...userData,
+      id: Date.now().toString()
+    };
+
+    users.push(newUser);
+    this.saveUsers(users);
+
+    return of(newUser);
+  }
+
+  login(email: string, password: string): Observable<User> {
+    const users = this.getUsers();
+    const user = users.find(u => u.email === email);
+
+    if (!user) {
+      return throwError(() => new Error('User not found'));
+    }
+
+    // In a real app, we would verify the password hash here
+    localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(user));
+    return of(user);
+  }
+
+  logout(): void {
+    localStorage.removeItem(this.CURRENT_USER_KEY);
   }
 
   getCurrentUser(): User | null {
@@ -37,33 +76,29 @@ export class AuthService {
     return userStr ? JSON.parse(userStr) : null;
   }
 
-  login(email: string, password: string): Observable<User> {
+  updateUser(userId: string, updates: Partial<User>): Observable<User> {
     const users = this.getUsers();
-    const user = users.find(u => u.email === email && u.password === password);
-    
-    if (user) {
-      localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(user));
-      return of(user);
+    const index = users.findIndex(u => u.id === userId);
+
+    if (index === -1) {
+      return throwError(() => new Error('User not found'));
     }
-    return throwError(() => new Error('Invalid credentials'));
+
+    const updatedUser = { ...users[index], ...updates };
+    users[index] = updatedUser;
+    this.saveUsers(users);
+
+    // Update current user if it's the same user
+    const currentUser = this.getCurrentUser();
+    if (currentUser && currentUser.id === userId) {
+      localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(updatedUser));
+    }
+
+    return of(updatedUser);
   }
 
-  register(userData: Omit<User, 'id'>): Observable<User> {
-    const users = this.getUsers();
-    const newUser: User = {
-      ...userData,
-      id: Date.now().toString(),
-      role: 'individual'
-    };
-
-    users.push(newUser);
-    localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
-    localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(newUser));
-    return of(newUser);
-  }
-
-  clearSession(): void {
-    localStorage.removeItem(this.CURRENT_USER_KEY);
+  updateProfile(userId: string, userData: Partial<User>): Observable<User> {
+    return this.updateUser(userId, userData);
   }
 
   private getUsers(): User[] {
@@ -71,33 +106,21 @@ export class AuthService {
     return usersStr ? JSON.parse(usersStr) : [];
   }
 
-  updateProfile(userId: string, userData: Partial<User>): Observable<User> {
-    const users = this.getUsers();
-    const userIndex = users.findIndex(u => u.id === userId);
-    
-    if (userIndex === -1) {
-      return throwError(() => new Error('User not found'));
-    }
-
-    const updatedUser = {
-      ...users[userIndex],
-      ...userData
-    };
-
-    users[userIndex] = updatedUser;
+  private saveUsers(users: User[]): void {
     localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
-    localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(updatedUser));
-    
-    return of(updatedUser);
   }
 
   deleteAccount(userId: string): Observable<void> {
     const users = this.getUsers();
-    const updatedUsers = users.filter(u => u.id !== userId);
-    
-    localStorage.setItem(this.USERS_KEY, JSON.stringify(updatedUsers));
-    localStorage.removeItem(this.CURRENT_USER_KEY);
-    
+    const index = users.findIndex(u => u.id === userId);
+
+    if (index === -1) {
+      return throwError(() => new Error('User not found'));
+    }
+
+    users.splice(index, 1);
+    this.saveUsers(users);
+    this.logout();
     return of(void 0);
   }
 } 

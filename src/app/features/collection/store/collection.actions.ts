@@ -1,6 +1,22 @@
 import { createAction, props } from '@ngrx/store';
 import { CollectionRequest } from '../../../core/models/collection.model';
 
+// Load User Requests
+export const loadUserRequests = createAction(
+  '[Collection] Load User Requests'
+);
+
+export const loadUserRequestsSuccess = createAction(
+  '[Collection] Load User Requests Success',
+  props<{ requests: CollectionRequest[] }>()
+);
+
+export const loadUserRequestsFailure = createAction(
+  '[Collection] Load User Requests Failure',
+  props<{ error: string }>()
+);
+
+// Create Request
 export const createCollectionRequest = createAction(
   '[Collection] Create Request',
   props<{ request: CollectionRequest }>()
@@ -28,4 +44,9 @@ export const loadPendingRequestsSuccess = createAction(
 export const loadPendingRequestsFailure = createAction(
   '[Collection] Load Pending Requests Failure',
   props<{ error: string }>()
+);
+
+export const deleteCollectionRequest = createAction(
+  '[Collection] Delete Collection Request',
+  props<{ requestId: string }>()
 ); 
