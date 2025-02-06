@@ -1,24 +1,27 @@
-import { inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { Store } from '@ngrx/store';
-import { map, take } from 'rxjs/operators';
-import { selectAuthUser } from '../../features/auth/store/auth.selectors';
-import { User } from '../../core/models/user.model';
+import { Injectable } from '@angular/core';
+import { CanActivate, Router, UrlTree } from '@angular/router';
+import { Observable } from 'rxjs';
+import { AuthService } from '../services/auth.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
+@Injectable({
+  providedIn: 'root'
+})
+export class NoAuthGuard implements CanActivate {
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private snackBar: MatSnackBar
+  ) {}
 
-export const noAuthGuard = () => {
-  const router = inject(Router);
-  const store = inject(Store);
-  
-  return store.select(selectAuthUser).pipe(
-    take(1),
-    map((user: User | null) => {
-      if (user) {
-        const dashboardPath = `/dashboard/${user.role}`;
-        router.navigate([dashboardPath]);
-        return false;
-      }
-      return true;
-    })
-  );
-}; 
+  canActivate(): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    const currentUser = this.authService.getCurrentUser();
+    
+    if (currentUser) {
+      this.snackBar.open('You are already logged in', 'Close', { duration: 3000 });
+      return this.router.createUrlTree(['/dashboard']);
+    }
+
+    return true;
+  }
+} 

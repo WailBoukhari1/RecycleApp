@@ -1,58 +1,39 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { Store } from '@ngrx/store';
-import { selectAuthUser } from '../../../features/auth/store/auth.selectors';
-import * as AuthActions from '../../../features/auth/store/auth.actions';
+import { Observable } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
+import { User } from '../../models/user.model';
 
 @Component({
   selector: 'app-navbar',
   templateUrl: './navbar.component.html',
   styles: [`
     :host {
-      @apply block;
+      @apply block sticky top-0 z-50;
     }
-
-    ::ng-deep {
-      .mat-mdc-menu-panel {
-        @apply rounded-lg shadow-lg;
-      }
-
-      .mat-mdc-menu-content {
-        @apply p-0;
-      }
-
-      .mat-mdc-menu-item {
-        @apply min-h-0;
-      }
-
-      .mat-icon {
-        @apply grid place-items-center h-6 w-6;
-      }
+    .mat-toolbar {
+      @apply px-4;
+    }
+    nav {
+      @apply flex items-center space-x-2;
     }
   `]
 })
 export class NavbarComponent {
-  user$ = this.store.select(selectAuthUser);
+  user$: Observable<User | null>;
 
   constructor(
-    private store: Store,
+    private authService: AuthService,
     private router: Router
-  ) {}
+  ) {
+    // Get the current user as an observable
+    this.user$ = new Observable<User | null>(observer => {
+      observer.next(this.authService.getCurrentUser());
+    });
+  }
 
   navigateToProfile(): void {
     this.router.navigate(['/profile']);
-  }
-
-  navigateToAvailableCollections(): void {
-    this.router.navigate(['/collection/available']);
-  }
-
-  navigateToCreateRequest(): void {
-    this.router.navigate(['/collection/create']);
-  }
-
-  navigateToRequests(): void {
-    this.router.navigate(['/collection/my-requests']);
   }
 
   navigateToLogin(): void {
@@ -63,7 +44,21 @@ export class NavbarComponent {
     this.router.navigate(['/auth/register']);
   }
 
+  navigateToDashboard(): void {
+    this.router.navigate(['/dashboard']);
+  }
+
+  navigateToRequests(): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser?.role === 'collector') {
+      this.router.navigate(['/collection/available']);
+    } else {
+      this.router.navigate(['/collection/my-requests']);
+    }
+  }
+
   logout(): void {
-    this.store.dispatch(AuthActions.logout());
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
   }
 }

@@ -16,6 +16,16 @@
         <div class="h-8 w-px bg-gray-200"></div>
 
         <div class="flex items-center gap-4" *ngIf="user$ | async as user">
+          <!-- Navigation Links -->
+          <button mat-button class="text-gray-700 hover:text-blue-600" (click)="navigateToDashboard()">
+            <mat-icon class="mr-2">dashboard</mat-icon>
+            Dashboard
+          </button>
+          <button mat-button class="text-gray-700 hover:text-blue-600" (click)="navigateToRequests()">
+            <mat-icon class="mr-2">list_alt</mat-icon>
+            {{ user.role === 'collector' ? 'Available Requests' : 'My Requests' }}
+          </button>
+
           <button 
             [matMenuTriggerFor]="profileMenu"
             class="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">

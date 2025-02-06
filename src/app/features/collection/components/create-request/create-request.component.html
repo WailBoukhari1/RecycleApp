@@ -33,7 +33,7 @@
           <mat-label>Weight (kg)</mat-label>
           <input matInput type="number" formControlName="weight" required
                  [min]="COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000"
-                 [max]="remainingWeightLimit">
+                 [max]="maxWeightPerRequest">
           <mat-hint>Minimum: {{COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000}}kg</mat-hint>
           <mat-error *ngIf="waste.get('weight')?.errors?.['required']">
             Weight is required
@@ -42,7 +42,7 @@
             Minimum weight is {{COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000}}kg
           </mat-error>
           <mat-error *ngIf="waste.get('weight')?.errors?.['max']">
-            Maximum weight is {{remainingWeightLimit}}kg
+            Maximum weight is {{maxWeightPerRequest}}kg
           </mat-error>
         </mat-form-field>
 

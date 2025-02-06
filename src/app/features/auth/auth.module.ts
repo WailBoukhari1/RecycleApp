@@ -1,7 +1,8 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { ReactiveFormsModule } from '@angular/forms';
+import { SharedModule } from '../../shared/shared.module';
 import { MaterialModule } from '../../shared/material.module';
 import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
@@ -10,17 +11,14 @@ import { authRoutes } from './auth.routes';
 @NgModule({
   declarations: [
     LoginComponent,
-    RegisterComponent,
+    RegisterComponent
   ],
   imports: [
     CommonModule,
-    ReactiveFormsModule,
     RouterModule.forChild(authRoutes),
+    ReactiveFormsModule,
+    SharedModule,
     MaterialModule
-  ],
-  exports: [
-    LoginComponent,
-    RegisterComponent,
   ]
 })
 export class AuthModule { } 

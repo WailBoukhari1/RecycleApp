@@ -1,10 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import * as AuthActions from './features/auth/store/auth.actions';
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
+  template: `
+
+    <app-navbar *ngIf="!isAuthRoute"></app-navbar>
+    <router-outlet></router-outlet>
+    <app-footer *ngIf="!isAuthRoute"></app-footer>
+  `,
+
   styles: [`
     :host {
       display: block;
@@ -28,10 +36,17 @@ import * as AuthActions from './features/auth/store/auth.actions';
     }
   `]
 })
-export class AppComponent implements OnInit {
-  constructor(private store: Store) {}
+export class AppComponent {
+  isAuthRoute = false;
 
-  ngOnInit() {
+  constructor(private router: Router, private store: Store) {
+    // Subscribe to router events to check if we're on an auth route
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      this.isAuthRoute = event.url.includes('/auth');
+    });
+
     this.store.dispatch(AuthActions.initAuth());
   }
 }

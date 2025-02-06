@@ -1,23 +1,27 @@
-import { inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { Store } from '@ngrx/store';
-import { map, take } from 'rxjs/operators';
-import { selectAuthUser } from '../../features/auth/store/auth.selectors';
+import { Injectable } from '@angular/core';
+import { CanActivate, Router, UrlTree } from '@angular/router';
+import { Observable } from 'rxjs';
+import { AuthService } from '../services/auth.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
-export const authGuard = () => {
-  const router = inject(Router);
-  const store = inject(Store);
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthGuard implements CanActivate {
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private snackBar: MatSnackBar
+  ) {}
 
-  return store.select(selectAuthUser).pipe(
-    take(1),
-    map(user => {
-      if (!user) {
-        router.navigate(['/auth/login'], {
-          queryParams: { returnUrl: router.routerState.snapshot.url }
-        });
-        return false;
-      }
-      return true;
-    })
-  );
-}; 
+  canActivate(): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    const currentUser = this.authService.getCurrentUser();
+    
+    if (!currentUser) {
+      this.snackBar.open('Please log in to access this page', 'Close', { duration: 3000 });
+      return this.router.createUrlTree(['/auth/login']);
+    }
+
+    return true;
+  }
+} 

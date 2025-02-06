@@ -1,38 +1,32 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
-import { noAuthGuard } from './core/guards/no-auth.guard';
+import { AuthGuard } from './core/guards/auth.guard';
+import { NoAuthGuard } from './core/guards/no-auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
-    canActivate: [noAuthGuard],
-    children: [
-      {
-        path: '',
-        redirectTo: 'auth/login',
-        pathMatch: 'full'
-      }
-    ]
+    redirectTo: 'dashboard',
+    pathMatch: 'full'
   },
   {
     path: 'auth',
-    canActivate: [noAuthGuard],
-    loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
+    loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule),
+    canActivate: [NoAuthGuard]
   },
   {
     path: 'dashboard',
-    canActivate: [authGuard],
-    loadChildren: () => import('./features/dashboard/dashboard.module').then(m => m.DashboardModule)
+    loadChildren: () => import('./features/dashboard/dashboard.module').then(m => m.DashboardModule),
+    canActivate: [AuthGuard]
   },
   {
     path: 'profile',
-    canActivate: [authGuard],
-    loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule)
+    loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule),
+    canActivate: [AuthGuard]
   },
   {
     path: 'collection',
-    canActivate: [authGuard],
-    loadChildren: () => import('./features/collection/collection.module').then(m => m.CollectionModule)
+    loadChildren: () => import('./features/collection/collection.module').then(m => m.CollectionModule),
+    canActivate: [AuthGuard]
   },
   {
     path: '**',

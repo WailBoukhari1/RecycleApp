@@ -31,7 +31,7 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
   selectedPhotos: string[] = [];
   pendingRequestsCount = 0;
   timeSlots: string[] = [];
-  remainingWeightLimit: number = COLLECTION_CONSTRAINTS.MAX_TOTAL_WEIGHT_KG;
+  maxWeightPerRequest = COLLECTION_CONSTRAINTS.MAX_TOTAL_WEIGHT_KG;
   readonly COLLECTION_CONSTRAINTS = COLLECTION_CONSTRAINTS;
   private destroy$ = new Subject<void>();
 
@@ -53,15 +53,6 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
     ).subscribe(pendingRequests => {
       this.pendingRequestsCount = pendingRequests.length;
       
-      // Calculate remaining weight limit from existing pending requests
-      const totalPendingWeight = pendingRequests.reduce((sum, request) => 
-        sum + (request.totalWeight / 1000), 0);
-      this.remainingWeightLimit = Math.max(0, 
-        COLLECTION_CONSTRAINTS.MAX_TOTAL_WEIGHT_KG - totalPendingWeight);
-
-      // Update wastes form array validators
-      this.updateWasteValidators();
-
       if (this.pendingRequestsCount >= COLLECTION_CONSTRAINTS.MAX_PENDING_REQUESTS) {
         this.snackBar.open(
           `You have reached the maximum limit of ${COLLECTION_CONSTRAINTS.MAX_PENDING_REQUESTS} pending requests`, 
@@ -76,7 +67,6 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
     this.wastes.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => {
-      this.updateWasteValidators();
       this.validateTotalWeight();
     });
   }
@@ -99,30 +89,12 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
     this.addWasteItem();
   }
 
-  private updateWasteValidators(): void {
-    const wastesArray = this.wastes;
-    const totalWeight = this.calculateTotalWeight();
-    const remainingWeight = COLLECTION_CONSTRAINTS.MAX_TOTAL_WEIGHT_KG - totalWeight;
-
-    wastesArray.controls.forEach(control => {
-      const currentWeight = Number(control.get('weight')?.value) || 0;
-      const maxWeight = Math.min(10, remainingWeight + currentWeight); // Max 10kg per request
-
-      control.get('weight')?.setValidators([
-        Validators.required,
-        Validators.min(COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000),
-        Validators.max(maxWeight)
-      ]);
-      control.get('weight')?.updateValueAndValidity({ emitEvent: false });
-    });
-  }
-
   private validateTotalWeight(): void {
     const totalWeight = this.calculateTotalWeight();
     
-    if (totalWeight > 10) {
+    if (totalWeight > COLLECTION_CONSTRAINTS.MAX_TOTAL_WEIGHT_KG) {
       this.snackBar.open(
-        `Total weight (${totalWeight.toFixed(1)}kg) exceeds the maximum limit of 10kg`, 
+        `Total weight (${totalWeight.toFixed(1)}kg) exceeds the maximum limit of ${COLLECTION_CONSTRAINTS.MAX_TOTAL_WEIGHT_KG}kg per request`, 
         'Close',
         { duration: 3000 }
       );
@@ -142,7 +114,7 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
         return sum + (Number(wasteControl.get('weight')?.value) || 0);
       }, 0);
 
-      if (totalWeight > 10) {
+      if (totalWeight > COLLECTION_CONSTRAINTS.MAX_TOTAL_WEIGHT_KG) {
         return { maxTotalWeight: true };
       }
 
@@ -172,7 +144,7 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
       weight: ['', [
         Validators.required,
         Validators.min(COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000),
-        Validators.max(this.remainingWeightLimit)
+        Validators.max(COLLECTION_CONSTRAINTS.MAX_TOTAL_WEIGHT_KG)
       ]],
       photos: [[]]
     }));
@@ -181,7 +153,6 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
   removeWasteItem(index: number): void {
     const wastes = this.wastes;
     wastes.removeAt(index);
-    this.updateWasteValidators();
   }
 
   private futureDateValidator() {
@@ -252,9 +223,9 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
       
       const totalWeight = this.calculateTotalWeight();
       
-      if (totalWeight > this.remainingWeightLimit) {
+      if (totalWeight > COLLECTION_CONSTRAINTS.MAX_TOTAL_WEIGHT_KG) {
         this.snackBar.open(
-          `Maximum allowed weight is ${this.remainingWeightLimit}kg for new requests`, 
+          `Maximum allowed weight is ${COLLECTION_CONSTRAINTS.MAX_TOTAL_WEIGHT_KG}kg for new requests`, 
           'Close',
           { duration: 3000 }
         );
