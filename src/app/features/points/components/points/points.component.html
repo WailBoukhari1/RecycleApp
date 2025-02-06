@@ -1,0 +1,53 @@
+<div class="container mx-auto p-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Points Overview -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>My Points</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="p-6">
+        <div *ngIf="currentUser$ | async as user" class="text-center">
+          <div class="text-5xl font-bold text-blue-600 mb-4">
+            {{ user.points || 0 }}
+          </div>
+          <p class="text-gray-600">Available Points</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Redeem Points -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Redeem Points</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="p-6">
+        <div class="grid grid-cols-1 gap-4">
+          <div *ngFor="let tier of rewardTiers" 
+               class="p-4 border rounded-lg hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-center">
+              <div>
+                <div class="text-xl font-bold">{{ tier.value }} Dh</div>
+                <div class="text-gray-600">{{ tier.points }} points</div>
+              </div>
+              <button mat-raised-button color="primary"
+                      [disabled]="!(currentUser$ | async)?.points || ((currentUser$ | async)?.points || 0) < tier.points"
+                      (click)="redeemPoints(tier)">
+                Redeem
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Points History -->
+  <div class="mt-6">
+    <app-points-history></app-points-history>
+  </div>
+
+  <!-- Vouchers -->
+  <div class="mt-6">
+    <app-voucher-list></app-voucher-list>
+  </div>
+</div> 

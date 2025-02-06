@@ -25,6 +25,12 @@
             <mat-icon class="mr-2">list_alt</mat-icon>
             {{ user.role === 'collector' ? 'Available Requests' : 'My Requests' }}
           </button>
+          <button *ngIf="user.role === 'individual'" 
+                  mat-button class="text-gray-700 hover:text-blue-600" 
+                  (click)="navigateToPoints()">
+            <mat-icon class="mr-2">stars</mat-icon>
+            My Points
+          </button>
 
           <button 
             [matMenuTriggerFor]="profileMenu"

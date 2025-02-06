@@ -1,0 +1,29 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>My Vouchers</mat-card-title>
+  </mat-card-header>
+  <mat-card-content class="p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div *ngFor="let voucher of vouchers$ | async" 
+           class="p-4 border rounded-lg hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-center">
+          <div>
+            <div class="text-xl font-bold">{{ voucher.value }} Dh</div>
+            <div class="text-gray-600">Redeemed {{ voucher.points }} points</div>
+            <div class="text-sm text-gray-500">
+              {{ voucher.createdAt | date }}
+            </div>
+          </div>
+          <div class="text-xl font-mono bg-gray-100 p-2 rounded">
+            {{ voucher.code }}
+          </div>
+        </div>
+      </div>
+      
+      <div *ngIf="!(vouchers$ | async)?.length" 
+           class="col-span-2 text-center py-8 text-gray-500">
+        No vouchers yet. Start redeeming your points!
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card> 

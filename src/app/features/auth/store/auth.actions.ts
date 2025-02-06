@@ -66,4 +66,35 @@ export const deleteAccountSuccess = createAction(
 export const deleteAccountFailure = createAction(
   '[Auth] Delete Account Failure',
   props<{ error: string }>()
+);
+
+// Points Actions
+export const updatePoints = createAction(
+  '[Auth] Update Points',
+  props<{ userId: string; points: number }>()
+);
+
+export const updatePointsSuccess = createAction(
+  '[Auth] Update Points Success',
+  props<{ points: number }>()
+);
+
+export const updatePointsFailure = createAction(
+  '[Auth] Update Points Failure',
+  props<{ error: string }>()
+);
+
+export const redeemPoints = createAction(
+  '[Auth] Redeem Points',
+  props<{ points: number }>()
+);
+
+export const redeemPointsSuccess = createAction(
+  '[Auth] Redeem Points Success',
+  props<{ points: number; voucher: any }>()
+);
+
+export const redeemPointsFailure = createAction(
+  '[Auth] Redeem Points Failure',
+  props<{ error: string }>()
 ); 

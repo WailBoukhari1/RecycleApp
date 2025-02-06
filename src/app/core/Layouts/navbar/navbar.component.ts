@@ -26,10 +26,7 @@ export class NavbarComponent {
     private authService: AuthService,
     private router: Router
   ) {
-    // Get the current user as an observable
-    this.user$ = new Observable<User | null>(observer => {
-      observer.next(this.authService.getCurrentUser());
-    });
+    this.user$ = this.authService.currentUser$;
   }
 
   navigateToProfile(): void {
@@ -55,6 +52,10 @@ export class NavbarComponent {
     } else {
       this.router.navigate(['/collection/my-requests']);
     }
+  }
+
+  navigateToPoints(): void {
+    this.router.navigate(['/points']);
   }
 
   logout(): void {

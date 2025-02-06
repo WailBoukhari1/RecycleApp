@@ -29,6 +29,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'points',
+    loadChildren: () => import('./features/points/points.module').then(m => m.PointsModule),
+    canActivate: [AuthGuard]
+  },
+  {
     path: '**',
     redirectTo: ''
   }

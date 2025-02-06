@@ -6,82 +6,14 @@ import { CollectionService } from '../../../../core/services/collection.service'
 import { PointsService, RewardVoucher } from '../../../../core/services/points.service';
 import { REWARD_TIERS } from '../../../../core/models/collection.model';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { Observable, forkJoin } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { Observable, forkJoin, map } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { User } from '../../../../core/models/user.model';
+import { RequestStatus } from '../../../../core/models/collection.model';
 
 @Component({
   selector: 'app-individual-dashboard',
-  template: `
-    <div class="space-y-6">
-      <!-- Points Overview -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>My Points</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="p-6">
-          <div class="text-4xl font-bold text-blue-600">
-            {{ getUserPoints() }} points
-          </div>
-          <p class="text-gray-600 mt-2">
-            Earn points by recycling materials and redeem them for rewards!
-          </p>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Reward Tiers -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Available Rewards</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="p-6">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div *ngFor="let tier of rewardTiers" 
-                 class="p-4 border rounded-lg hover:shadow-md transition-shadow">
-              <div class="text-xl font-bold">{{ tier.value }} Dh</div>
-              <div class="text-gray-600">{{ tier.points }} points</div>
-              <button mat-raised-button color="primary"
-                      class="mt-4 w-full"
-                      [disabled]="getUserPoints() < tier.points"
-                      (click)="redeemPoints(tier)">
-                Redeem
-              </button>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- My Vouchers -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>My Vouchers</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="p-6">
-          <div class="space-y-4">
-            <div *ngFor="let voucher of vouchers$ | async" 
-                 class="p-4 border rounded-lg">
-              <div class="flex justify-between items-center">
-                <div>
-                  <div class="text-lg font-bold">{{ voucher.value }} Dh</div>
-                  <div class="text-gray-600">Redeemed {{ voucher.points }} points</div>
-                  <div class="text-sm text-gray-500">
-                    {{ voucher.createdAt | date }}
-                  </div>
-                </div>
-                <div class="text-xl font-mono bg-gray-100 p-2 rounded">
-                  {{ voucher.code }}
-                </div>
-              </div>
-            </div>
-            <div *ngIf="!(vouchers$ | async)?.length" 
-                 class="text-center text-gray-500 py-8">
-              No vouchers yet. Start redeeming your points!
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-  `,
+  templateUrl: './individual-dashboard.component.html',
   styles: [`
     :host {
       @apply block;
@@ -92,6 +24,11 @@ export class IndividualDashboardComponent implements OnInit {
   currentUser: User | null = this.authService.getCurrentUser();
   rewardTiers = REWARD_TIERS;
   vouchers$: Observable<RewardVoucher[]>;
+  user$: Observable<User | null>;
+  validatedRequests$: Observable<number>;
+  inProgressRequests$: Observable<number>;
+  rejectedRequests$: Observable<number>;
+  latestVouchers$: Observable<RewardVoucher[]>;
 
   constructor(
     private authService: AuthService,
@@ -101,6 +38,31 @@ export class IndividualDashboardComponent implements OnInit {
     private snackBar: MatSnackBar
   ) {
     this.vouchers$ = this.pointsService.getUserVouchers();
+    this.user$ = this.authService.currentUser$;
+    
+    // Get request statistics
+    const requests$ = this.collectionService.getUserRequests();
+    
+    this.validatedRequests$ = requests$.pipe(
+      map(requests => requests.filter(r => r.status === 'validated').length)
+    );
+
+    this.inProgressRequests$ = requests$.pipe(
+      map(requests => requests.filter(r => 
+        r.status === 'in_progress' || r.status === 'occupied'
+      ).length)
+    );
+
+    this.rejectedRequests$ = requests$.pipe(
+      map(requests => requests.filter(r => r.status === 'rejected').length)
+    );
+
+    // Get latest 5 vouchers
+    this.latestVouchers$ = this.pointsService.getUserVouchers().pipe(
+      map(vouchers => vouchers.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ).slice(0, 5))
+    );
   }
 
   getUserPoints(): number {

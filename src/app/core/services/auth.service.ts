@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
 import { User, UserRole } from '../models/user.model';
 import { Address, formatAddress } from '../models/address.model';
 
@@ -9,9 +9,14 @@ import { Address, formatAddress } from '../models/address.model';
 export class AuthService {
   private readonly USERS_KEY = 'users';
   private readonly CURRENT_USER_KEY = 'currentUser';
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  currentUser$ = this.currentUserSubject.asObservable();
 
   constructor() {
     this.initializeUsers();
+    // Initialize the current user from storage
+    const storedUser = this.getCurrentUser();
+    this.currentUserSubject.next(storedUser);
   }
 
   private initializeUsers(): void {
@@ -64,6 +69,7 @@ export class AuthService {
 
     // In a real app, we would verify the password hash here
     localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(user));
+    this.currentUserSubject.next(user);
     return of(user);
   }
 
@@ -92,6 +98,7 @@ export class AuthService {
     const currentUser = this.getCurrentUser();
     if (currentUser && currentUser.id === userId) {
       localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(updatedUser));
+      this.currentUserSubject.next(updatedUser);
     }
 
     return of(updatedUser);

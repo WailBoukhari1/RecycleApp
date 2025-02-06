@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { AuthService } from './auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable, of, throwError } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { POINTS_CONFIG, REWARD_TIERS } from '../models/collection.model';
 
 export interface RewardVoucher {
@@ -66,33 +67,36 @@ export class PointsService {
       return throwError(() => new Error('Invalid points amount'));
     }
 
-    // Create voucher
-    const voucher: RewardVoucher = {
-      id: Date.now().toString(),
-      userId: currentUser.id,
-      points: points,
-      value: tier.value,
-      createdAt: new Date().toISOString(),
-      code: this.generateVoucherCode()
-    };
+    const updatedPoints = currentUser.points - points;
 
-    // Update user points
-    this.authService.updateUser(currentUser.id, {
-      points: currentUser.points - points
-    }).subscribe();
+    // First update the user's points
+    return this.authService.updateUser(currentUser.id, {
+      points: updatedPoints
+    }).pipe(
+      switchMap(() => {
+        // Create and save voucher after points are updated
+        const voucher: RewardVoucher = {
+          id: Date.now().toString(),
+          userId: currentUser.id,
+          points: points,
+          value: tier.value,
+          createdAt: new Date().toISOString(),
+          code: this.generateVoucherCode()
+        };
 
-    // Save voucher
-    const vouchers = this.getVouchers();
-    vouchers.push(voucher);
-    this.saveVouchers(vouchers);
+        const vouchers = this.getVouchers();
+        vouchers.push(voucher);
+        this.saveVouchers(vouchers);
 
-    this.snackBar.open(
-      `Successfully redeemed ${points} points for a ${tier.value} Dh voucher!`,
-      'Close',
-      { duration: 5000 }
+        this.snackBar.open(
+          `Successfully redeemed ${points} points for a ${tier.value} Dh voucher!`,
+          'Close',
+          { duration: 5000 }
+        );
+
+        return of(voucher);
+      })
     );
-
-    return of(voucher);
   }
 
   private generateVoucherCode(): string {

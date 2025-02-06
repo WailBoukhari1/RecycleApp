@@ -10,82 +10,97 @@
       </p>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Stats Card -->
-      <mat-card class="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-        <mat-card-content>
-          <div class="flex items-center justify-between mb-4">
-            <div class="text-lg font-medium">Total Points</div>
-            <mat-icon class="text-blue-200">stars</mat-icon>
-          </div>
-          <div class="text-3xl font-bold mb-2">150</div>
-          <div class="text-sm text-blue-100">Points earned from recycling</div>
-        </mat-card-content>
-      </mat-card>
-      <!-- Rewards Card -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Available Rewards</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="!mt-4">
-          <div class="space-y-4">
-            <div class="p-4 border border-gray-200 rounded-lg">
-              <div class="flex items-center justify-between mb-2">
-                <span class="font-medium">50 MAD Voucher</span>
-                <span class="text-sm text-gray-500">100 points</span>
-              </div>
-              <button
-                mat-stroked-button
-                color="primary"
-                class="w-full"
-                [disabled]="true"
-              >
-                Redeem
-              </button>
+    <!-- Statistics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Points Card -->
+      <mat-card class="bg-gradient-to-br from-blue-50 to-blue-100">
+        <mat-card-content class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">Total Points</h3>
+              <p class="text-3xl font-bold text-blue-600 mt-2">
+                {{ (user$ | async)?.points || 0 }}
+              </p>
             </div>
-            <div class="p-4 border border-gray-200 rounded-lg">
-              <div class="flex items-center justify-between mb-2">
-                <span class="font-medium">100 MAD Voucher</span>
-                <span class="text-sm text-gray-500">200 points</span>
-              </div>
-              <button
-                mat-stroked-button
-                color="primary"
-                class="w-full"
-                [disabled]="true"
-              >
-                Redeem
-              </button>
-            </div>
+            <mat-icon class="text-blue-500 text-4xl">stars</mat-icon>
           </div>
         </mat-card-content>
       </mat-card>
-      <!-- Quick Actions Card -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Quick Actions</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="!mt-4">
-          <div class="grid grid-cols-2 gap-4">
-            <button
-              mat-stroked-button
-              color="primary"
-              (click)="navigateToCreateRequest()"
-            >
-              <mat-icon>add_circle</mat-icon>
-              <span class="ml-2">New Request</span>
-            </button>
-            <button
-              mat-stroked-button
-              color="primary"
-              (click)="navigateToRequests()"
-            >
-              <mat-icon>list</mat-icon>
-              <span class="ml-2">My Requests</span>
-            </button>
+
+      <!-- Validated Requests -->
+      <mat-card class="bg-gradient-to-br from-green-50 to-green-100">
+        <mat-card-content class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">Validated</h3>
+              <p class="text-3xl font-bold text-green-600 mt-2">
+                {{ validatedRequests$ | async }}
+              </p>
+            </div>
+            <mat-icon class="text-green-500 text-4xl">check_circle</mat-icon>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- In Progress Requests -->
+      <mat-card class="bg-gradient-to-br from-purple-50 to-purple-100">
+        <mat-card-content class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">In Progress</h3>
+              <p class="text-3xl font-bold text-purple-600 mt-2">
+                {{ inProgressRequests$ | async }}
+              </p>
+            </div>
+            <mat-icon class="text-purple-500 text-4xl">pending</mat-icon>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Rejected Requests -->
+      <mat-card class="bg-gradient-to-br from-red-50 to-red-100">
+        <mat-card-content class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">Rejected</h3>
+              <p class="text-3xl font-bold text-red-600 mt-2">
+                {{ rejectedRequests$ | async }}
+              </p>
+            </div>
+            <mat-icon class="text-red-500 text-4xl">cancel</mat-icon>
           </div>
         </mat-card-content>
       </mat-card>
     </div>
+
+    <!-- Latest Vouchers -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Latest Vouchers</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="p-6">
+        <div class="space-y-4">
+          <div *ngFor="let voucher of latestVouchers$ | async" 
+               class="p-4 border rounded-lg hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-center">
+              <div>
+                <div class="text-lg font-bold">{{ voucher.value }} Dh</div>
+                <div class="text-gray-600">Redeemed {{ voucher.points }} points</div>
+                <div class="text-sm text-gray-500">
+                  {{ voucher.createdAt | date }}
+                </div>
+              </div>
+              <div class="text-xl font-mono bg-gray-100 p-2 rounded">
+                {{ voucher.code }}
+              </div>
+            </div>
+          </div>
+          <div *ngIf="!(latestVouchers$ | async)?.length" 
+               class="text-center text-gray-500 py-8">
+            No vouchers yet. Start redeeming your points!
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
   </div>
 </div>
