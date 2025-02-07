@@ -1,147 +1,153 @@
 <div class="max-w-3xl mx-auto">
-  <h2 class="text-2xl font-bold mb-6">Create Collection Request</h2>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ isEditing ? 'Edit' : 'Create' }} Collection Request</mat-card-title>
+    </mat-card-header>
 
-  <form [formGroup]="requestForm" (ngSubmit)="onSubmit()" class="space-y-6">
-    <!-- Waste Items -->
-    <div formArrayName="wastes" class="space-y-4">
-      <div *ngFor="let waste of wastes.controls; let i=index" [formGroupName]="i" 
-           class="p-4 border rounded-lg bg-white shadow-sm">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-semibold">Waste Item {{i + 1}}</h3>
-          <button type="button" (click)="removeWasteItem(i)" 
-                  class="text-red-600 hover:text-red-800" 
-                  [disabled]="wastes.length === 1">
-            <mat-icon>delete</mat-icon>
-          </button>
-        </div>
-
-        <!-- Waste Type -->
-        <mat-form-field class="w-full">
-          <mat-label>Waste Type</mat-label>
-          <mat-select formControlName="type" required>
-            <mat-option *ngFor="let type of wasteTypes" [value]="type">
-              {{type | titlecase}}
-            </mat-option>
-          </mat-select>
-          <mat-error *ngIf="waste.get('type')?.errors?.['required']">
-            Waste type is required
-          </mat-error>
-        </mat-form-field>
-
-        <!-- Weight -->
-        <mat-form-field class="w-full mt-4">
-          <mat-label>Weight (kg)</mat-label>
-          <input matInput type="number" formControlName="weight" required
-                 [min]="COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000"
-                 [max]="maxWeightPerRequest">
-          <mat-hint>Minimum: {{COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000}}kg</mat-hint>
-          <mat-error *ngIf="waste.get('weight')?.errors?.['required']">
-            Weight is required
-          </mat-error>
-          <mat-error *ngIf="waste.get('weight')?.errors?.['min']">
-            Minimum weight is {{COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000}}kg
-          </mat-error>
-          <mat-error *ngIf="waste.get('weight')?.errors?.['max']">
-            Maximum weight is {{maxWeightPerRequest}}kg
-          </mat-error>
-        </mat-form-field>
-
-        <!-- Photos -->
-        <div class="mt-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Photos (Optional)</label>
-          <div class="photo-upload" (click)="fileInput.click()">
-            <input #fileInput type="file" accept="image/*" multiple
-                   (change)="onFileSelected($event, i)" class="hidden">
-            <mat-icon class="text-gray-400">add_photo_alternate</mat-icon>
-            <p class="mt-1 text-sm text-gray-500">Click to upload photos</p>
+    <form [formGroup]="requestForm" (ngSubmit)="onSubmit()" class="space-y-6">
+      <!-- Waste Items -->
+      <div formArrayName="wastes" class="space-y-4">
+        <div *ngFor="let waste of wastes.controls; let i=index" [formGroupName]="i" 
+             class="p-4 border rounded-lg bg-white shadow-sm">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Waste Item {{i + 1}}</h3>
+            <button type="button" (click)="removeWasteItem(i)" 
+                    class="text-red-600 hover:text-red-800" 
+                    [disabled]="wastes.length === 1">
+              <mat-icon>delete</mat-icon>
+            </button>
           </div>
-          
-          <!-- Photo Preview -->
-          <div *ngIf="waste.get('photos')?.value?.length" class="mt-4 grid grid-cols-4 gap-4">
-            <div *ngFor="let photo of waste.get('photos')?.value; let photoIndex = index" 
-                 class="relative">
-              <img [src]="photo" class="w-full h-24 object-cover rounded">
-              <button type="button" (click)="removePhoto(i, photoIndex)"
-                      class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 
-                             hover:bg-red-600">
-                <mat-icon class="text-sm">close</mat-icon>
-              </button>
+
+          <!-- Waste Type -->
+          <mat-form-field class="w-full">
+            <mat-label>Waste Type</mat-label>
+            <mat-select formControlName="type" required>
+              <mat-option *ngFor="let type of wasteTypes" [value]="type">
+                {{type | titlecase}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="waste.get('type')?.errors?.['required']">
+              Waste type is required
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Weight -->
+          <mat-form-field class="w-full mt-4">
+            <mat-label>Weight (kg)</mat-label>
+            <input matInput type="number" formControlName="weight" required
+                   [min]="COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000"
+                   [max]="maxWeightPerRequest">
+            <mat-hint>Minimum: {{COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000}}kg</mat-hint>
+            <mat-error *ngIf="waste.get('weight')?.errors?.['required']">
+              Weight is required
+            </mat-error>
+            <mat-error *ngIf="waste.get('weight')?.errors?.['min']">
+              Minimum weight is {{COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000}}kg
+            </mat-error>
+            <mat-error *ngIf="waste.get('weight')?.errors?.['max']">
+              Maximum weight is {{maxWeightPerRequest}}kg
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Photos -->
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Photos (Optional)</label>
+            <div class="photo-upload" (click)="fileInput.click()">
+              <input #fileInput type="file" accept="image/*" multiple
+                     (change)="onFileSelected($event, i)" class="hidden">
+              <mat-icon class="text-gray-400">add_photo_alternate</mat-icon>
+              <p class="mt-1 text-sm text-gray-500">Click to upload photos</p>
+            </div>
+            
+            <!-- Photo Preview -->
+            <div *ngIf="waste.get('photos')?.value?.length" class="mt-4 grid grid-cols-4 gap-4">
+              <div *ngFor="let photo of waste.get('photos')?.value; let photoIndex = index" 
+                   class="relative">
+                <img [src]="photo" class="w-full h-24 object-cover rounded">
+                <button type="button" (click)="removePhoto(i, photoIndex)"
+                        class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 
+                               hover:bg-red-600">
+                  <mat-icon class="text-sm">close</mat-icon>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Add Waste Item Button -->
+      <button type="button" (click)="addWasteItem()"
+              class="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg
+                     text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-colors"
+              [disabled]="wastes.length >= 5">
+        <mat-icon>add</mat-icon>
+        Add Waste Item
+      </button>
+
+      <!-- Collection Address -->
+      <mat-form-field class="w-full">
+        <mat-label>Collection Address</mat-label>
+        <textarea matInput formControlName="collectionAddress" required rows="3"></textarea>
+        <mat-error *ngIf="requestForm.get('collectionAddress')?.errors?.['required']">
+          Collection address is required
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Date -->
+      <mat-form-field class="w-full">
+        <mat-label>Collection Date</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="date" required>
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+        <mat-error *ngIf="requestForm.get('date')?.errors?.['required']">
+          Collection date is required
+        </mat-error>
+        <mat-error *ngIf="requestForm.get('date')?.errors?.['pastDate']">
+          Collection date must be in the future
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Time Slot -->
+      <mat-form-field class="w-full">
+        <mat-label>Time Slot</mat-label>
+        <mat-select formControlName="timeSlot" required>
+          <mat-option *ngFor="let slot of timeSlots" [value]="slot">
+            {{slot}}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="requestForm.get('timeSlot')?.errors?.['required']">
+          Time slot is required
+        </mat-error>
+        <mat-error *ngIf="requestForm.get('timeSlot')?.errors?.['invalidTimeSlot']">
+          Time slot must be between {{COLLECTION_CONSTRAINTS.TIME_SLOT_START}} and 
+          {{COLLECTION_CONSTRAINTS.TIME_SLOT_END}}
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Notes -->
+      <mat-form-field class="w-full">
+        <mat-label>Additional Notes (Optional)</mat-label>
+        <textarea matInput formControlName="notes" rows="3"></textarea>
+      </mat-form-field>
+
+      <mat-card-actions align="end">
+        <button mat-button type="button" routerLink="/collection/my-requests">Cancel</button>
+        <button mat-raised-button color="primary" type="submit" 
+                [disabled]="requestForm.invalid || requestForm.pristine">
+          {{ isEditing ? 'Update' : 'Create' }} Request
+        </button>
+      </mat-card-actions>
+    </form>
+
+    <div class="mb-4">
+      <h3 class="text-lg font-semibold mb-2">Add Waste Items</h3>
+      <p class="text-sm text-gray-600 mb-4">
+        Total weight must be between {{COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000}}kg and 10kg
+      </p>
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-sm font-medium">Total Weight: {{calculateTotalWeight() | number:'1.1-1'}}kg</span>
+        <span class="text-xs text-gray-500">(Remaining: {{10 - calculateTotalWeight() | number:'1.1-1'}}kg)</span>
+      </div>
     </div>
-
-    <!-- Add Waste Item Button -->
-    <button type="button" (click)="addWasteItem()"
-            class="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg
-                   text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-colors"
-            [disabled]="wastes.length >= 5">
-      <mat-icon>add</mat-icon>
-      Add Waste Item
-    </button>
-
-    <!-- Collection Address -->
-    <mat-form-field class="w-full">
-      <mat-label>Collection Address</mat-label>
-      <textarea matInput formControlName="collectionAddress" required rows="3"></textarea>
-      <mat-error *ngIf="requestForm.get('collectionAddress')?.errors?.['required']">
-        Collection address is required
-      </mat-error>
-    </mat-form-field>
-
-    <!-- Date -->
-    <mat-form-field class="w-full">
-      <mat-label>Collection Date</mat-label>
-      <input matInput [matDatepicker]="picker" formControlName="date" required>
-      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-      <mat-datepicker #picker></mat-datepicker>
-      <mat-error *ngIf="requestForm.get('date')?.errors?.['required']">
-        Collection date is required
-      </mat-error>
-      <mat-error *ngIf="requestForm.get('date')?.errors?.['pastDate']">
-        Collection date must be in the future
-      </mat-error>
-    </mat-form-field>
-
-    <!-- Time Slot -->
-    <mat-form-field class="w-full">
-      <mat-label>Time Slot</mat-label>
-      <mat-select formControlName="timeSlot" required>
-        <mat-option *ngFor="let slot of timeSlots" [value]="slot">
-          {{slot}}
-        </mat-option>
-      </mat-select>
-      <mat-error *ngIf="requestForm.get('timeSlot')?.errors?.['required']">
-        Time slot is required
-      </mat-error>
-      <mat-error *ngIf="requestForm.get('timeSlot')?.errors?.['invalidTimeSlot']">
-        Time slot must be between {{COLLECTION_CONSTRAINTS.TIME_SLOT_START}} and 
-        {{COLLECTION_CONSTRAINTS.TIME_SLOT_END}}
-      </mat-error>
-    </mat-form-field>
-
-    <!-- Notes -->
-    <mat-form-field class="w-full">
-      <mat-label>Additional Notes (Optional)</mat-label>
-      <textarea matInput formControlName="notes" rows="3"></textarea>
-    </mat-form-field>
-
-    <!-- Submit Button -->
-    <button type="submit" mat-raised-button color="primary" class="w-full"
-            [disabled]="!requestForm.valid || pendingRequestsCount >= COLLECTION_CONSTRAINTS.MAX_PENDING_REQUESTS">
-      Submit Collection Request
-    </button>
-  </form>
-
-  <div class="mb-4">
-    <h3 class="text-lg font-semibold mb-2">Add Waste Items</h3>
-    <p class="text-sm text-gray-600 mb-4">
-      Total weight must be between {{COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000}}kg and 10kg
-    </p>
-    <div class="flex items-center gap-2 mb-2">
-      <span class="text-sm font-medium">Total Weight: {{calculateTotalWeight() | number:'1.1-1'}}kg</span>
-      <span class="text-xs text-gray-500">(Remaining: {{10 - calculateTotalWeight() | number:'1.1-1'}}kg)</span>
-    </div>
-  </div>
+  </mat-card>
 </div> 

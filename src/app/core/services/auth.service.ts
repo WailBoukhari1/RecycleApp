@@ -31,7 +31,7 @@ export class AuthService {
         address: {
           street: '123 Main St',
           district: 'Downtown',
-          city: 'Casablanca',
+          city: 'Safi',
           postalCode: '20000'
         },
         role: 'collector'

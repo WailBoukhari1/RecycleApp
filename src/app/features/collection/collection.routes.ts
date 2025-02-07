@@ -5,6 +5,7 @@ import { RequestListComponent } from './components/request-list/request-list.com
 import { RequestDetailComponent } from './components/request-detail/request-detail.component';
 import { CollectorRequestsComponent } from './components/collector-requests/collector-requests.component';
 import { AuthGuard } from '../../core/guards/auth.guard';
+import { RequestResolver } from '../../core/resolvers/request.resolver';
 
 export const collectionRoutes: Routes = [
   {
@@ -28,7 +29,8 @@ export const collectionRoutes: Routes = [
     path: 'create',
     component: CreateRequestComponent,
     canActivate: [RoleGuard],
-    data: { role: 'individual' }
+    data: { role: 'individual' },
+    resolve: { request: RequestResolver }
   },
   {
     path: 'detail/:id',
@@ -39,7 +41,8 @@ export const collectionRoutes: Routes = [
     path: 'edit/:id',
     component: CreateRequestComponent,
     canActivate: [RoleGuard],
-    data: { role: 'individual' }
+    data: { role: 'individual' },
+    resolve: { request: RequestResolver }
   },
   {
     path: 'my-collections',

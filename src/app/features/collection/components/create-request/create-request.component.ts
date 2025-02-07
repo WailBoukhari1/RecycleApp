@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { WasteType, RequestStatus, CollectionRequest, COLLECTION_CONSTRAINTS } from '../../../../core/models/collection.model';
 import { createCollectionRequest } from '../../store/collection.actions';
@@ -9,6 +9,9 @@ import { CollectionState } from '../../store/collection.reducer';
 import { selectAllRequests } from '../../store/collection.selectors';
 import { map, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { CollectionService } from '../../../../core/services/collection.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-create-request',
@@ -27,6 +30,8 @@ import { Subject } from 'rxjs';
 })
 export class CreateRequestComponent implements OnInit, OnDestroy {
   requestForm!: FormGroup;
+  isEditing = false;
+  editingId: string | null = null;
   wasteTypes: WasteType[] = ['plastic', 'glass', 'paper', 'metal'];
   selectedPhotos: string[] = [];
   pendingRequestsCount = 0;
@@ -39,13 +44,25 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private store: Store<{ collection: CollectionState }>,
     private router: Router,
-    private snackBar: MatSnackBar
+    private route: ActivatedRoute,
+    private snackBar: MatSnackBar,
+    private collectionService: CollectionService,
+    private notificationService: NotificationService,
+    private authService: AuthService
   ) {
     this.initTimeSlots();
-    this.createForm();
+    this.requestForm = this.createForm();
   }
 
   ngOnInit(): void {
+    // Get resolved data
+    const resolvedRequest = this.route.snapshot.data['request'];
+    if (resolvedRequest) {
+      this.isEditing = true;
+      this.editingId = resolvedRequest.id;
+      this.patchForm(resolvedRequest);
+    }
+
     // Check number of pending requests
     this.store.select(selectAllRequests).pipe(
       map(requests => requests.filter(r => r.status === 'pending')),
@@ -76,17 +93,38 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private createForm(): void {
-    this.requestForm = this.fb.group({
-      wastes: this.fb.array([], [this.totalWeightValidator()]),
+  private createForm(): FormGroup {
+    return this.fb.group({
+      wastes: this.fb.array([]),
       collectionAddress: ['', Validators.required],
       date: ['', [Validators.required, this.futureDateValidator()]],
       timeSlot: ['', [Validators.required, this.timeSlotValidator()]],
       notes: ['']
     });
+  }
 
-    // Add initial waste item
-    this.addWasteItem();
+  private patchForm(request: CollectionRequest): void {
+    // Clear existing wastes
+    while (this.wastes.length) {
+      this.wastes.removeAt(0);
+    }
+
+    // Add each waste
+    request.wastes.forEach(waste => {
+      this.wastes.push(this.fb.group({
+        type: [waste.type, Validators.required],
+        weight: [waste.weight / 1000, [Validators.required, Validators.min(0.1)]], // Convert from g to kg
+        photos: [waste.photos || []]
+      }));
+    });
+
+    // Patch other fields
+    this.requestForm.patchValue({
+      collectionAddress: request.collectionAddress,
+      date: request.date,
+      timeSlot: request.timeSlot,
+      notes: request.notes
+    });
   }
 
   private validateTotalWeight(): void {
@@ -218,52 +256,46 @@ export class CreateRequestComponent implements OnInit, OnDestroy {
   }
 
   onSubmit(): void {
-    if (this.requestForm.valid && 
-        this.pendingRequestsCount < COLLECTION_CONSTRAINTS.MAX_PENDING_REQUESTS) {
-      
-      const totalWeight = this.calculateTotalWeight();
-      
-      if (totalWeight > COLLECTION_CONSTRAINTS.MAX_TOTAL_WEIGHT_KG) {
-        this.snackBar.open(
-          `Maximum allowed weight is ${COLLECTION_CONSTRAINTS.MAX_TOTAL_WEIGHT_KG}kg for new requests`, 
-          'Close',
-          { duration: 3000 }
-        );
-        return;
-      }
+    if (this.requestForm.invalid) {
+      this.notificationService.error('Please fill all required fields correctly');
+      return;
+    }
 
-      if (totalWeight * 1000 < COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS) {
-        this.snackBar.open(
-          `Minimum total weight must be ${COLLECTION_CONSTRAINTS.MIN_WEIGHT_GRAMS / 1000}kg`, 
-          'Close',
-          { duration: 3000 }
-        );
-        return;
-      }
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      this.notificationService.error('You must be logged in to create a request');
+      return;
+    }
 
-      const formValue = this.requestForm.value;
-      const request: CollectionRequest = {
-        userId: 'current-user-id', // This should be injected from AuthService
-        userAddress: 'current-user-address', // This should be injected from AuthService
-        userCity: 'current-user-city', // This should be injected from AuthService
-        wastes: formValue.wastes.map((w: any) => ({
-          ...w,
-          weight: w.weight * 1000 // Convert to grams
-        })),
-        totalWeight: totalWeight * 1000, // Convert to grams
-        collectionAddress: formValue.collectionAddress,
-        date: formValue.date,
-        timeSlot: formValue.timeSlot,
-        notes: formValue.notes || '',
-        status: 'pending' as RequestStatus,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+    const formValue = this.requestForm.value;
+    const request = {
+      ...formValue,
+      wastes: formValue.wastes.map((w: any) => ({
+        ...w,
+        weight: w.weight * 1000 // Convert kg to g
+      })),
+      totalWeight: formValue.wastes.reduce((sum: number, w: any) => sum + (w.weight * 1000), 0)
+    };
 
-      this.store.dispatch(createCollectionRequest({ request }));
-      this.router.navigate(['/collection/my-requests']);
-      this.snackBar.open('Collection request created successfully', 'Close', {
-        duration: 3000
+    if (this.isEditing && this.editingId) {
+      this.collectionService.updateRequest(this.editingId, request).subscribe({
+        next: () => {
+          this.notificationService.success('Request updated successfully');
+          this.router.navigate(['/collection/my-requests']);
+        },
+        error: (error) => {
+          this.notificationService.error(error.message || 'Failed to update request');
+        }
+      });
+    } else {
+      this.collectionService.createRequest(request).subscribe({
+        next: () => {
+          this.notificationService.success('Request created successfully');
+          this.router.navigate(['/collection/my-requests']);
+        },
+        error: (error) => {
+          this.notificationService.error(error.message || 'Failed to create request');
+        }
       });
     }
   }
