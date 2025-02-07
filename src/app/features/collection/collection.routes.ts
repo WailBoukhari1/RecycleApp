@@ -3,6 +3,8 @@ import { RoleGuard } from '../../core/guards/role.guard';
 import { CreateRequestComponent } from './components/create-request/create-request.component';
 import { RequestListComponent } from './components/request-list/request-list.component';
 import { RequestDetailComponent } from './components/request-detail/request-detail.component';
+import { CollectorRequestsComponent } from './components/collector-requests/collector-requests.component';
+import { AuthGuard } from '../../core/guards/auth.guard';
 
 export const collectionRoutes: Routes = [
   {
@@ -38,5 +40,11 @@ export const collectionRoutes: Routes = [
     component: CreateRequestComponent,
     canActivate: [RoleGuard],
     data: { role: 'individual' }
+  },
+  {
+    path: 'my-collections',
+    component: CollectorRequestsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { role: 'collector' }
   }
 ]; 

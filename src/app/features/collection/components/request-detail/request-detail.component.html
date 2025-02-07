@@ -174,7 +174,7 @@
     <!-- Back Button -->
     <div class="flex justify-start mt-4">
       <button mat-button color="primary" 
-              [routerLink]="['/collection', userRole === 'collector' ? 'available' : 'my-requests']">
+              (click)="navigateBack()">
         <mat-icon>arrow_back</mat-icon>
         Back to List
       </button>

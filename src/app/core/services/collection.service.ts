@@ -122,9 +122,11 @@ export class CollectionService {
     }
 
     const collections = this.getCollections();
-    // Show all requests from the collector's city
+    // Show only pending requests from the collector's city
     const cityRequests = collections.filter(request => 
-      request.userCity.toLowerCase() === collectorCity.toLowerCase()
+      request.userCity.toLowerCase() === collectorCity.toLowerCase() &&
+      request.status === 'pending' &&
+      !request.collectorId
     );
 
     console.log('Available requests debug:', {

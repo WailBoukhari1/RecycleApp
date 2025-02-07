@@ -14,12 +14,13 @@ import { collectionReducer } from './store/collection.reducer';
 import { CollectionEffects } from './store/collection.effects';
 import { collectionRoutes } from './collection.routes';
 import { CollectionService } from '../../core/services/collection.service';
+import { CollectorRequestsComponent } from './components/collector-requests/collector-requests.component';
 
 @NgModule({
   declarations: [
     CreateRequestComponent,
     RequestDetailComponent,
-
+    CollectorRequestsComponent,
     SafeUrlPipe
   ],
   imports: [

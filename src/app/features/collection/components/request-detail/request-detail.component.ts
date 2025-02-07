@@ -148,7 +148,7 @@ export class RequestDetailComponent implements OnInit {
             switch (newStatus) {
               case 'occupied':
                 message = 'Request accepted successfully';
-                this.router.navigate(['/collection/active-requests']);
+                this.router.navigate(['/collection/my-collections']);
                 break;
               case 'in_progress':
                 message = 'Collection started';
@@ -205,5 +205,24 @@ export class RequestDetailComponent implements OnInit {
         });
       }
     });
+  }
+
+  navigateBack(): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) return;
+
+    if (currentUser.role === 'collector') {
+      // If the request is occupied/in_progress by this collector, go to my-collections
+      if (this.request?.collectorId === currentUser.id && 
+          ['occupied', 'in_progress'].includes(this.request.status)) {
+        this.router.navigate(['/collection/my-collections']);
+      } else {
+        // Otherwise go to available requests
+        this.router.navigate(['/collection/available']);
+      }
+    } else {
+      // For individuals, always go to my-requests
+      this.router.navigate(['/collection/my-requests']);
+    }
   }
 } 

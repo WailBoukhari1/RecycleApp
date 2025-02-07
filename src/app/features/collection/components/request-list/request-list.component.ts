@@ -18,6 +18,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 import { CollectionService } from '../../../../core/services/collection.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { map, takeUntil } from 'rxjs/operators';
+import { NotificationService } from '../../../../core/services/notification.service';
 
 @Component({
   selector: 'app-request-list',
@@ -86,7 +87,8 @@ export class RequestListComponent implements OnInit, OnDestroy {
     private snackBar: MatSnackBar,
     private collectionService: CollectionService,
     private authService: AuthService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private notificationService: NotificationService
   ) {
     this.userRole = this.currentUser?.role || 'individual';
     this.requests$ = this.store.select(selectAllRequests);
@@ -120,14 +122,16 @@ export class RequestListComponent implements OnInit, OnDestroy {
       // Load requests from the same city for collectors
       this.collectionService.getAvailableRequests(this.currentUser.address.city).subscribe({
         next: (requests) => {
-          this.requests$ = new Observable(observer => observer.next(requests));
+          // Filter out requests that are not pending (already taken by collectors)
+          const availableRequests = requests.filter(request => request.status === 'pending');
+          this.requests$ = new Observable(observer => observer.next(availableRequests));
         },
         error: (error) => {
           this.snackBar.open('Failed to load available requests', 'Close', { duration: 3000 });
         }
       });
     } else {
-      // Load user's own requests for individuals
+      // For individuals, show all their requests regardless of status
       this.store.dispatch(loadUserRequests());
     }
   }
@@ -189,46 +193,19 @@ export class RequestListComponent implements OnInit, OnDestroy {
     });
   }
 
-  acceptRequest(request: CollectionRequest): void {
-    if (!request.id || !this.currentUser) return;
+  acceptRequest(requestId: string): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) return;
 
-    // Verify city match before accepting
-    if (request.userCity.toLowerCase() !== this.currentUser.address.city.toLowerCase()) {
-      this.snackBar.open(
-        'You can only accept requests from your city', 
-        'Close', 
-        { duration: 3000 }
-      );
-      return;
-    }
-
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: 'Accept Collection Request',
-        message: `Are you sure you want to accept this collection request? 
-                 You will be responsible for collecting ${request.totalWeight / 1000}kg of waste.`,
-        confirmText: 'Accept',
-        cancelText: 'Cancel'
-      }
-    });
-
-    dialogRef.afterClosed()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(result => {
-        if (result) {
-          this.collectionService.updateRequestStatus(
-            request.id!,
-            'occupied',
-            this.currentUser!.id
-          ).subscribe({
-            next: () => {
-              this.snackBar.open('Request accepted successfully', 'Close', { duration: 3000 });
-              this.loadRequests();
-            },
-            error: (error) => {
-              this.snackBar.open('Failed to accept request', 'Close', { duration: 3000 });
-            }
-          });
+    this.collectionService.updateRequestStatus(requestId, 'occupied', currentUser.id)
+      .subscribe({
+        next: (updatedRequest) => {
+          this.notificationService.success('Request accepted successfully');
+          // Instead of redirecting, just reload the current list
+          this.loadRequests();
+        },
+        error: (error) => {
+          this.notificationService.error('Failed to accept request');
         }
       });
   }

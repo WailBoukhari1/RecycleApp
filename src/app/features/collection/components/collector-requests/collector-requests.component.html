@@ -1,0 +1,48 @@
+<div class="container mx-auto p-6">
+  <h2 class="text-2xl font-bold mb-4">My Collection Requests</h2>
+  
+  <mat-card *ngIf="collectorRequests.length > 0">
+    <mat-card-content>
+      <table mat-table [dataSource]="collectorRequests" class="w-full">
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let request">
+            {{request.date | date:'shortDate'}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="address">
+          <th mat-header-cell *matHeaderCellDef>Address</th>
+          <td mat-cell *matCellDef="let request">
+            {{request.collectionAddress}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let request">
+            <span class="capitalize">{{request.status}}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let request">
+            <button mat-button color="primary" [routerLink]="['/collection/detail', request.id]">
+              View Details
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card *ngIf="collectorRequests.length === 0">
+    <mat-card-content>
+      <p class="text-center py-4 text-gray-600">You don't have any active collection requests</p>
+    </mat-card-content>
+  </mat-card>
+</div> 

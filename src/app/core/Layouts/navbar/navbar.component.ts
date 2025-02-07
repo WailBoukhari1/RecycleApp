@@ -54,6 +54,10 @@ export class NavbarComponent {
     }
   }
 
+  navigateToMyCollections(): void {
+    this.router.navigate(['/collection/my-collections']);
+  }
+
   navigateToPoints(): void {
     this.router.navigate(['/points']);
   }
