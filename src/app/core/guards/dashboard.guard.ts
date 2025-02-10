@@ -23,13 +23,6 @@ export class DashboardGuard implements CanActivate {
     }
 
     if (!this.isProfileComplete(currentUser)) {
-      this.snackBar.open(
-        'Please complete your profile to access all features', 
-        'Go to Profile',
-        { duration: 5000 }
-      ).onAction().subscribe(() => {
-        this.router.navigate(['/profile']);
-      });
       return this.router.createUrlTree(['/profile']);
     }
 

@@ -14,7 +14,7 @@ export interface WasteItem {
 }
 
 export interface CollectionRequest {
-  id?: string;
+  id: string;
   userId: string;
   userAddress: string;
   userCity: string;
@@ -32,9 +32,11 @@ export interface CollectionRequest {
   collectorPhotos?: string[];
   verifiedWeight?: number;
   pointsAwarded?: number;
+  validatedWeight?: number;
+  validatedAt?: string;
 }
 
-// Points configuration per kg
+// Consolidate points configuration
 export const POINTS_CONFIG = {
   plastic: 2,
   glass: 1,

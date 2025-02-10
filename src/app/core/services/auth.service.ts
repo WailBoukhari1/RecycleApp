@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
-import { User, UserRole } from '../models/user.model';
-import { Address, formatAddress } from '../models/address.model';
+import { User } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -24,6 +23,7 @@ export class AuthService {
       const defaultCollector: User = {
         id: '1',
         email: 'collector@recycleapp.com',
+        password : 'collector@recycleapp.com',
         firstName: 'Default',
         lastName: 'Collector',
         phoneNumber: '+212-666-123456',

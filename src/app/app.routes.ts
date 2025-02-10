@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 import { NoAuthGuard } from './core/guards/no-auth.guard';
+import { ProfileComponent } from './features/profile/components/profile.component';
+import { ProfileGuard } from './core/guards/profile.guard';
 
 export const routes: Routes = [
   {
@@ -20,8 +22,9 @@ export const routes: Routes = [
   },
   {
     path: 'profile',
-    loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule),
-    canActivate: [AuthGuard]
+    component: ProfileComponent,
+    canActivate: [AuthGuard],
+    canDeactivate: [ProfileGuard]
   },
   {
     path: 'collection',

@@ -8,7 +8,7 @@ import { UserRole } from '../models/user.model';
 @Injectable({
   providedIn: 'root'
 })
-export class RoleGuard implements CanActivate {
+export class RoleGuard  {
   constructor(
     private authService: AuthService,
     private router: Router,

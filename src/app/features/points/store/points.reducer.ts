@@ -1,59 +1,48 @@
 import { createReducer, on } from '@ngrx/store';
-import { RewardVoucher } from '../../../core/services/points.service';
+import { initialPointsState } from './points.state';
 import * as PointsActions from './points.actions';
 
-export interface PointsState {
-  points: number;
-  vouchers: RewardVoucher[];
-  loading: boolean;
-  error: string | null;
-}
-
-export const initialState: PointsState = {
-  points: 0,
-  vouchers: [],
-  loading: false,
-  error: null
-};
-
 export const pointsReducer = createReducer(
-  initialState,
-
+  initialPointsState,
+  
   // Load Points
-  on(PointsActions.loadPoints, state => ({
+  on(PointsActions.loadUserPoints, state => ({
     ...state,
     loading: true,
     error: null
   })),
-
-  on(PointsActions.loadPointsSuccess, (state, { points }) => ({
+  
+  on(PointsActions.loadUserPointsSuccess, (state, { balance, transactions, vouchers }) => ({
     ...state,
-    points,
+    balance,
+    transactions,
+    vouchers,
     loading: false,
     error: null
   })),
-
-  on(PointsActions.loadPointsFailure, (state, { error }) => ({
+  
+  on(PointsActions.loadUserPointsFailure, (state, { error }) => ({
     ...state,
     loading: false,
     error
   })),
 
-  // Load Vouchers
-  on(PointsActions.loadVouchers, state => ({
+  // Earn Points
+  on(PointsActions.earnPoints, state => ({
     ...state,
     loading: true,
     error: null
   })),
-
-  on(PointsActions.loadVouchersSuccess, (state, { vouchers }) => ({
+  
+  on(PointsActions.earnPointsSuccess, (state, { transaction, newBalance }) => ({
     ...state,
-    vouchers,
+    balance: newBalance,
+    transactions: [transaction, ...state.transactions],
     loading: false,
     error: null
   })),
-
-  on(PointsActions.loadVouchersFailure, (state, { error }) => ({
+  
+  on(PointsActions.earnPointsFailure, (state, { error }) => ({
     ...state,
     loading: false,
     error
@@ -65,15 +54,16 @@ export const pointsReducer = createReducer(
     loading: true,
     error: null
   })),
-
-  on(PointsActions.redeemPointsSuccess, (state, { voucher, remainingPoints }) => ({
+  
+  on(PointsActions.redeemPointsSuccess, (state, { voucher, transaction, newBalance }) => ({
     ...state,
-    points: remainingPoints,
-    vouchers: [...state.vouchers, voucher],
+    balance: newBalance,
+    transactions: [transaction, ...state.transactions],
+    vouchers: [voucher, ...state.vouchers],
     loading: false,
     error: null
   })),
-
+  
   on(PointsActions.redeemPointsFailure, (state, { error }) => ({
     ...state,
     loading: false,

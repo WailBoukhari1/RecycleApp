@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { RewardVoucher } from '../../../../core/services/points.service';
-import { selectVouchers, selectPointsLoading } from '../../store/points.selectors';
+import { Observable } from 'rxjs';
+import { Voucher } from '../../../../core/models/points.model';
+import { AuthService } from '../../../../core/services/auth.service';
 import * as PointsActions from '../../store/points.actions';
+import * as PointsSelectors from '../../store/points.selectors';
 
 @Component({
   selector: 'app-voucher-list',
@@ -15,15 +16,19 @@ import * as PointsActions from '../../store/points.actions';
   `]
 })
 export class VoucherListComponent implements OnInit {
-  vouchers$: Observable<RewardVoucher[]>;
-  loading$: Observable<boolean>;
+  vouchers$: Observable<Voucher[]>;
 
-  constructor(private store: Store) {
-    this.vouchers$ = this.store.select(selectVouchers);
-    this.loading$ = this.store.select(selectPointsLoading);
+  constructor(
+    private store: Store,
+    private authService: AuthService
+  ) {
+    this.vouchers$ = this.store.select(PointsSelectors.selectSortedVouchers);
   }
 
   ngOnInit(): void {
-    this.store.dispatch(PointsActions.loadVouchers());
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      this.store.dispatch(PointsActions.loadUserPoints({ userId: currentUser.id }));
+    }
   }
 } 

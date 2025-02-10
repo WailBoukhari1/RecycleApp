@@ -1,36 +1,44 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
-import { PointsState } from './points.reducer';
+import { PointsState } from './points.state';
+import { Voucher } from '../../../core/models/points.model';
 
 export const selectPointsState = createFeatureSelector<PointsState>('points');
 
-export const selectPoints = createSelector(
+export const selectBalance = createSelector(
   selectPointsState,
-  state => state.points
+  (state: PointsState) => state.balance
+);
+
+export const selectTransactions = createSelector(
+  selectPointsState,
+  (state: PointsState) => state.transactions
 );
 
 export const selectVouchers = createSelector(
   selectPointsState,
-  state => state.vouchers
+  (state: PointsState) => state.vouchers
 );
 
-export const selectPointsLoading = createSelector(
+export const selectLoading = createSelector(
   selectPointsState,
-  state => state.loading
+  (state: PointsState) => state.loading
 );
 
-export const selectPointsError = createSelector(
+export const selectError = createSelector(
   selectPointsState,
-  state => state.error
+  (state: PointsState) => state.error
 );
 
-export const selectLatestVouchers = createSelector(
+export const selectSortedVouchers = createSelector(
   selectVouchers,
-  vouchers => vouchers
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 5)
+  (vouchers) => [...vouchers].sort((a: Voucher, b: Voucher) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )
 );
 
-export const selectTotalPointsSpent = createSelector(
+export const selectTotalPointsRedeemed = createSelector(
   selectVouchers,
-  vouchers => vouchers.reduce((total, voucher) => total + voucher.points, 0)
+  (vouchers) => vouchers.reduce((total: number, voucher: Voucher) => 
+    total + voucher.points, 0
+  )
 ); 

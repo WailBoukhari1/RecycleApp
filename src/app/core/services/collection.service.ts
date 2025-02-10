@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, from } from 'rxjs';
 import { CollectionRequest, RequestStatus, POINTS_CONFIG, COLLECTION_CONSTRAINTS } from '../models/collection.model';
 import { AuthService } from './auth.service';
-import { map } from 'rxjs/operators';
+import { map, tap, catchError } from 'rxjs/operators';
+import { PointsService } from './points.service';
+import { NotificationService } from './notification.service';
+import { Store } from '@ngrx/store';
+import * as PointsActions from '../../features/points/store/points.actions';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +16,12 @@ export class CollectionService {
   private readonly MAX_WEIGHT_KG = 10;
   private readonly MIN_WEIGHT_GRAMS = 1000;
 
-  constructor(private authService: AuthService) {
+  constructor(
+    private authService: AuthService,
+    private pointsService: PointsService,
+    private notificationService: NotificationService,
+    private store: Store
+  ) {
     this.initializeCollections();
   }
 
@@ -169,21 +178,52 @@ export class CollectionService {
       status,
       collectorId,
       verifiedWeight,
+      validatedWeight: verifiedWeight,
+      validatedAt: status === 'validated' ? new Date().toISOString() : undefined,
       collectorPhotos: photos?.map(photo => URL.createObjectURL(photo)),
       updatedAt: new Date().toISOString()
     };
 
     if (status === 'validated' && verifiedWeight) {
-      let totalPoints = 0;
-      updatedRequest.wastes.forEach(waste => {
-        const pointsPerKg = POINTS_CONFIG[waste.type];
-        totalPoints += pointsPerKg * (waste.weight / 1000); // Convert grams to kg for points calculation
-      });
+      const totalPoints = Math.floor(this.calculatePoints(updatedRequest));
       updatedRequest.pointsAwarded = totalPoints;
+
+      // Only award points if points were calculated and not already awarded
+      if (totalPoints > 0 && updatedRequest.userId && !collections[index].pointsAwarded) {
+        // Save request first without points
+        collections[index] = { ...updatedRequest, pointsAwarded: undefined };
+        this.saveCollections(collections);
+
+        // Then award points using points service
+        this.pointsService.earnPoints(
+          updatedRequest.userId,
+          totalPoints,
+          updatedRequest.id,
+          `Recycling points for collection #${updatedRequest.id}`
+        ).subscribe({
+          next: ({ newBalance }) => {
+            // Update request with points after successful points award
+            collections[index] = updatedRequest;
+            this.saveCollections(collections);
+            
+            // Update user's points in profile
+            const user = this.authService.getCurrentUser();
+            if (user) {
+              this.authService.updateUser(user.id, { points: newBalance }).subscribe();
+            }
+            
+            this.notificationService.success(`Successfully awarded ${totalPoints} points!`);
+          },
+          error: (error) => {
+            this.notificationService.error('Failed to award points: ' + error.message);
+          }
+        });
+      }
+    } else {
+      collections[index] = updatedRequest;
+      this.saveCollections(collections);
     }
 
-    collections[index] = updatedRequest;
-    this.saveCollections(collections);
     return of(updatedRequest);
   }
 
@@ -256,4 +296,114 @@ export class CollectionService {
     
     return of(collectorRequests);
   }
-} 
+
+  validateRequest(requestId: string, validatedWeight: number): Observable<CollectionRequest> {
+    const requests = this.getCollections();
+    const requestIndex = requests.findIndex(r => r.id === requestId);
+
+    if (requestIndex === -1) {
+      return throwError(() => new Error('Request not found'));
+    }
+
+    const updatedRequest: CollectionRequest = {
+      ...requests[requestIndex],
+      status: 'validated',
+      validatedWeight,
+      updatedAt: new Date().toISOString()
+    };
+
+    const points = this.calculatePoints(updatedRequest);
+    console.log('Calculated points:', {
+      validatedWeight,
+      points,
+      request: updatedRequest
+    });
+
+    if (points > 0 && updatedRequest.userId) {
+      updatedRequest.pointsAwarded = points;
+
+      // Save request first without points
+      requests[requestIndex] = { ...updatedRequest, pointsAwarded: undefined };
+      this.saveCollections(requests);
+
+      // Then award points using NgRx store only
+      this.store.dispatch(PointsActions.earnPoints({
+        userId: updatedRequest.userId,
+        points,
+        collectionId: updatedRequest.id,
+        description: `Recycling points for collection #${updatedRequest.id}`
+      }));
+
+      // Update request with points after dispatch
+      requests[requestIndex] = updatedRequest;
+      this.saveCollections(requests);
+    } else {
+      // Save request without points
+      requests[requestIndex] = updatedRequest;
+      this.saveCollections(requests);
+    }
+
+    return of(updatedRequest);
+  }
+
+  private calculatePoints(request: CollectionRequest): number {
+    if (!request.wastes?.length || !request.validatedWeight) {
+      console.log('Missing wastes or validatedWeight:', request);
+      return 0;
+    }
+
+    // We should use validatedWeight instead of original waste weight
+    const totalValidatedWeight = request.validatedWeight; // in grams
+    const totalOriginalWeight = request.wastes.reduce((sum, waste) => sum + waste.weight, 0);
+
+    const points = request.wastes.reduce((total, waste) => {
+      // Calculate proportion of this waste type
+      const proportion = waste.weight / totalOriginalWeight;
+      // Apply proportion to validated weight and convert to kg
+      const validatedWasteWeight = (totalValidatedWeight * proportion) / 1000;
+      const pointsPerKg = POINTS_CONFIG[waste.type] || 0;
+      const wastePoints = validatedWasteWeight * pointsPerKg;
+
+      console.log('Waste points calculation:', {
+        type: waste.type,
+        originalWeight: waste.weight,
+        proportion,
+        validatedWasteWeight,
+        pointsPerKg,
+        wastePoints
+      });
+
+      return total + wastePoints;
+    }, 0);
+
+    console.log('Final points calculation:', {
+      totalValidatedWeight,
+      totalOriginalWeight,
+      points
+    });
+
+    return points;
+  }
+
+  private awardPoints(request: CollectionRequest, points: number): Observable<void> {
+    if (!request.userId || points <= 0) {
+      return of(void 0);
+    }
+
+    return from(this.pointsService.earnPoints(
+      request.userId,
+      points,
+      request.id,
+      `Recycling points for collection #${request.id}`
+    )).pipe(
+      map(() => void 0),
+      tap(() => {
+        this.notificationService.success(`Awarded ${points} points for recycling!`);
+      }),
+      catchError(error => {
+        this.notificationService.error('Failed to award points: ' + error.message);
+        return throwError(() => error);
+      })
+    );
+  }
+}

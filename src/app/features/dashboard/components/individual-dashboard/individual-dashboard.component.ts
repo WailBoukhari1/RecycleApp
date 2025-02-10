@@ -3,7 +3,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CollectionService } from '../../../../core/services/collection.service';
-import { PointsService, RewardVoucher } from '../../../../core/services/points.service';
+import { PointsService } from '../../../../core/services/points.service';
+import { Voucher } from '../../../../core/models/points.model';
 import { REWARD_TIERS } from '../../../../core/models/collection.model';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { Observable, forkJoin, map } from 'rxjs';
@@ -23,12 +24,12 @@ import { RequestStatus } from '../../../../core/models/collection.model';
 export class IndividualDashboardComponent implements OnInit {
   currentUser: User | null = this.authService.getCurrentUser();
   rewardTiers = REWARD_TIERS;
-  vouchers$: Observable<RewardVoucher[]>;
+  vouchers$: Observable<Voucher[]>;
   user$: Observable<User | null>;
   validatedRequests$: Observable<number>;
   inProgressRequests$: Observable<number>;
   rejectedRequests$: Observable<number>;
-  latestVouchers$: Observable<RewardVoucher[]>;
+  latestVouchers$: Observable<Voucher[]>;
 
   constructor(
     private authService: AuthService,

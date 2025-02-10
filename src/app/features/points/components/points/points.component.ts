@@ -1,60 +1,65 @@
-import { Component, OnInit } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { async, Observable, Subject } from 'rxjs';
+import { takeUntil, map } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { User } from '../../../../core/models/user.model';
-import { RewardVoucher } from '../../../../core/services/points.service';
-import { selectAuthUser } from '../../../auth/store/auth.selectors';
+import { PointsService } from '../../../../core/services/points.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { REWARD_TIERS } from '../../../../core/models/points.model';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
-import * as PointsActions from '../../store/points.actions';
-import * as PointsSelectors from '../../store/points.selectors';
 
 @Component({
   selector: 'app-points',
-  templateUrl: './points.component.html',
+  templateUrl: './points.component.html'
 })
-export class PointsComponent implements OnInit {
-  currentUser$: Observable<User | null>;
-  points$: Observable<number>;
-  loading$: Observable<boolean>;
-  error$: Observable<string | null>;
-  rewardTiers = [
-    { points: 100, value: 50 },
-    { points: 200, value: 120 },
-    { points: 500, value: 350 }
-  ];
+export class PointsComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  
+  balance$: Observable<number>;
+  rewardTiers = REWARD_TIERS;
 
   constructor(
-    private store: Store,
+    private pointsService: PointsService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private notificationService: NotificationService
   ) {
-    this.currentUser$ = this.store.select(selectAuthUser);
-    this.points$ = this.store.select(PointsSelectors.selectPoints);
-    this.loading$ = this.store.select(PointsSelectors.selectPointsLoading);
-    this.error$ = this.store.select(PointsSelectors.selectPointsError);
+    this.balance$ = this.pointsService.balance$;
   }
 
   ngOnInit(): void {
-    this.store.dispatch(PointsActions.loadPoints());
-    this.store.dispatch(PointsActions.loadVouchers());
+    this.pointsService.refreshUserBalance();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   redeemPoints(tier: { points: number; value: number }): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: 'Redeem Points',
-        message: `Are you sure you want to redeem ${tier.points} points for a ${tier.value} Dh reward voucher?`,
+        message: `Are you sure you want to redeem ${tier.points} points for a ${tier.value} Dh voucher?`,
         confirmText: 'Redeem',
         cancelText: 'Cancel'
       }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(result => {
       if (result) {
-        this.store.dispatch(PointsActions.redeemPoints({ points: tier.points, value: tier.value }));
+        this.pointsService.redeemPoints(tier.points).subscribe({
+          error: (error) => {
+            this.notificationService.error(error.message);
+          }
+        });
       }
     });
+  }
+
+  getDisabled(points: number): Observable<boolean> {
+    return this.balance$.pipe(
+      map(balance => balance === null || (balance || 0) < points)
+    );
   }
 } 

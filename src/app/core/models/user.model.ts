@@ -5,10 +5,12 @@ export type UserRole = 'individual' | 'collector';
 export interface User {
   id: string;
   email: string;
+  password: string;
   firstName: string;
   lastName: string;
   phoneNumber: string;  // Format: +212-XXX-XXXXXX
   dateOfBirth: string;
+
   address: Address;
   role: UserRole;
   photoUrl?: string;

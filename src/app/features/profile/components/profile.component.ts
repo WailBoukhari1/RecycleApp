@@ -39,6 +39,7 @@ export class ProfileComponent implements OnInit {
   currentUser$ = this.store.select(selectAuthUser);
   isProfileComplete = false;
   selectedPhoto: string | null = null;
+  user: any;
 
   constructor(
     private fb: FormBuilder,
@@ -66,6 +67,7 @@ export class ProfileComponent implements OnInit {
   ngOnInit() {
     this.currentUser$.subscribe(user => {
       if (user) {
+        this.user = user;
         this.profileForm.patchValue({
           email: user.email,
           firstName: user.firstName,
@@ -129,5 +131,9 @@ export class ProfileComponent implements OnInit {
       localStorage.clear();
       this.router.navigate(['/auth/login']);
     });
+  }
+
+  getUser() {
+    return this.user;
   }
 } 
