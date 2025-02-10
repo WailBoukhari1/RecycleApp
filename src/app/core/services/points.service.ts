@@ -15,10 +15,12 @@ export class PointsService {
   private balanceSubject = new BehaviorSubject<number>(0);
   private vouchersSubject = new BehaviorSubject<Voucher[]>([]);
   private transactionsSubject = new BehaviorSubject<PointTransaction[]>([]);
+  private totalPointsSubject = new BehaviorSubject<number>(0);
 
   balance$ = this.balanceSubject.asObservable();
   vouchers$ = this.vouchersSubject.asObservable();
   transactions$ = this.transactionsSubject.asObservable();
+  totalPoints$ = this.totalPointsSubject.asObservable();
 
   constructor(
     private authService: AuthService,
@@ -54,13 +56,23 @@ export class PointsService {
       return sum;
     }, 0);
 
-    // Update balance
+    // Calculate total points earned
+    const totalPoints = transactions.reduce((sum, t) => {
+      if (t.type === 'EARNED') return sum + t.amount;
+      return sum;
+    }, 0);
+
+    // Update balance and total points
     this.balanceSubject.next(balance);
+    this.totalPointsSubject.next(totalPoints);
     
     // Update user's stored points to match transaction balance
     const currentUser = this.authService.getCurrentUser();
     if (currentUser && currentUser.points !== balance) {
-      this.authService.updateUser(currentUser.id, { points: balance }).subscribe();
+      this.authService.updateUser(currentUser.id, { 
+        points: balance,
+        totalPoints: totalPoints 
+      }).subscribe();
     }
 
     // Update vouchers and transactions
@@ -73,6 +85,7 @@ export class PointsService {
     this.balanceSubject.next(0);
     this.vouchersSubject.next([]);
     this.transactionsSubject.next([]);
+    this.totalPointsSubject.next(0);
   }
 
   private getTransactions(): PointTransaction[] {
@@ -97,14 +110,16 @@ export class PointsService {
 
   loadUserPoints(userId: string): Observable<{
     balance: number;
+    totalPoints: number;
     transactions: PointTransaction[];
     vouchers: Voucher[];
   }> {
     const transactions = this.getTransactions().filter(t => t.userId === userId);
     const vouchers = this.getVouchers().filter(v => v.userId === userId);
     const balance = this.calculateNewBalance(userId);
+    const totalPoints = this.calculateTotalPoints(userId);
 
-    return of({ balance, transactions, vouchers });
+    return of({ balance, totalPoints, transactions, vouchers });
   }
 
   earnPoints(
@@ -188,6 +203,15 @@ export class PointsService {
 
     return transactions.reduce((balance, t) => {
       return t.type === 'EARNED' ? balance + t.amount : balance - t.amount;
+    }, 0);
+  }
+
+  private calculateTotalPoints(userId: string): number {
+    const transactions = this.getTransactions()
+      .filter(t => t.userId === userId);
+
+    return transactions.reduce((total, t) => {
+      return t.type === 'EARNED' ? total + t.amount : total;
     }, 0);
   }
 

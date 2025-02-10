@@ -15,6 +15,7 @@ export interface User {
   role: UserRole;
   photoUrl?: string;
   points?: number;  // For individuals only
+  totalPoints?: number;
 }
 
 export function formatPhoneNumber(phone: string): string {

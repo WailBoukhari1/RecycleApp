@@ -19,7 +19,7 @@
             <div>
               <h3 class="text-lg font-semibold text-gray-800">Total Points</h3>
               <p class="text-3xl font-bold text-blue-600 mt-2">
-                {{ (user$ | async)?.points || 0 }}
+                {{ (user$ | async)?.totalPoints || 0 }}
               </p>
             </div>
             <mat-icon class="text-blue-500 text-4xl">stars</mat-icon>
